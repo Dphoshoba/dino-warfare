@@ -167,7 +167,9 @@ class Game {
         // Mouse movement for player
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            this.player.x = e.clientX - rect.left;
+            const scaleX = this.canvas.width / rect.width;
+            const scaleY = this.canvas.height / rect.height;
+            this.player.x = (e.clientX - rect.left) * scaleX;
         });
         
         // Shooting
@@ -1515,6 +1517,7 @@ const avatarPreviewImg = document.getElementById('avatarPreviewImg');
 
 let playerName = 'Commander';
 let playerPhotoURL = 'sprites/sprites_player.png';
+let imageLoading = false;
 
 // Update HUD and preview with current name and photo
 function updatePlayerHUD() {
@@ -1531,32 +1534,71 @@ playerNameInput.oninput = function() {
     localStorage.setItem('dinoWarfarePlayerName', playerName);
 };
 
+// --- Utility: Resize image before saving to localStorage ---
+function resizeImage(file, maxSize, callback) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/png'));
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 // Live preview and set photo
 playerPhotoInput.onchange = function() {
     if (playerPhotoInput.files && playerPhotoInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            playerPhotoURL = e.target.result;
+        imageLoading = true;
+        playerSetupBtn.disabled = true;
+        resizeImage(playerPhotoInput.files[0], 64, function(resizedDataUrl) {
+            playerPhotoURL = resizedDataUrl;
             updatePlayerHUD();
-            // Save photo to localStorage
-            localStorage.setItem('dinoWarfarePlayerPhoto', playerPhotoURL);
-        };
-        reader.onerror = function() {
-            playerPhotoURL = 'sprites/sprites_player.png';
-            updatePlayerHUD();
-            // Save fallback to localStorage
-            localStorage.setItem('dinoWarfarePlayerPhoto', playerPhotoURL);
-        };
-        reader.readAsDataURL(playerPhotoInput.files[0]);
+            try {
+                localStorage.setItem('dinoWarfarePlayerPhoto', playerPhotoURL);
+            } catch (e) {
+                alert('Avatar image is too large to save. Using default avatar.');
+                playerPhotoURL = 'sprites/sprites_player.png';
+                updatePlayerHUD();
+                try {
+                    localStorage.setItem('dinoWarfarePlayerPhoto', playerPhotoURL);
+                } catch (e2) {
+                    // If this fails, just use the default in memory
+                }
+            }
+            imageLoading = false;
+            playerSetupBtn.disabled = false;
+        });
     } else {
         playerPhotoURL = 'sprites/sprites_player.png';
         updatePlayerHUD();
-        // Save fallback to localStorage
         localStorage.setItem('dinoWarfarePlayerPhoto', playerPhotoURL);
+        imageLoading = false;
+        playerSetupBtn.disabled = false;
     }
 };
 
-playerSetupBtn.onclick = function() {
+function startGameFromSetup() {
+    if (imageLoading) return; // Prevent starting while image is loading
     playerName = playerNameInput.value.trim() || 'Commander';
     updatePlayerHUD();
     // Save to localStorage
@@ -1567,30 +1609,19 @@ playerSetupBtn.onclick = function() {
         setup.parentNode.removeChild(setup); // Remove from DOM
         console.log('Player setup modal removed from DOM');
     }
+    resizeGameCanvas(); // Ensure canvas is correct size before starting game
     console.log('[DEBUG] Starting new Game from player setup');
     new Game();
-};
+}
 
-window.onload = function() {
-    const setup = document.getElementById('playerSetup');
-    if (setup) {
-        setup.style.display = 'block';
-        setup.setAttribute('aria-hidden', 'false');
+playerSetupBtn.onclick = startGameFromSetup;
+
+// Allow Enter key in name input to start game
+playerNameInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        startGameFromSetup();
     }
-    // Pre-fill name if found in localStorage
-    const savedName = localStorage.getItem('dinoWarfarePlayerName');
-    if (savedName) {
-        playerNameInput.value = savedName;
-        playerName = savedName;
-    }
-    // Pre-fill photo if found in localStorage
-    const savedPhoto = localStorage.getItem('dinoWarfarePlayerPhoto');
-    if (savedPhoto) {
-        playerPhotoURL = savedPhoto;
-        updatePlayerHUD();
-    }
-    updatePlayerHUD();
-};
+});
 
 // --- Share Progress Button ---
 const shareButton = document.getElementById('shareButton');
@@ -1680,4 +1711,31 @@ if (shareButton) {
         };
         img.src = playerPhotoURL;
     };
-} 
+}
+
+// --- Responsive Canvas Resize ---
+function resizeGameCanvas() {
+    const container = document.querySelector('.game-container');
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    // Set a minimum and maximum size
+    const gameWidth = Math.min(Math.max(width, 600), 1200);
+    const gameHeight = Math.min(Math.max(height, 400), 900);
+
+    // Resize all canvases
+    ['gameCanvas', 'bgStars', 'bgGrid', 'bgNebula', 'bgSparks', 'bgParticles'].forEach(id => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+            canvas.width = gameWidth;
+            canvas.height = gameHeight;
+            canvas.style.width = gameWidth + 'px';
+            canvas.style.height = gameHeight + 'px';
+        }
+    });
+    if (container) {
+        container.style.width = gameWidth + 'px';
+        container.style.height = gameHeight + 'px';
+    }
+}
+window.addEventListener('load', resizeGameCanvas);
+window.addEventListener('resize', resizeGameCanvas); 
