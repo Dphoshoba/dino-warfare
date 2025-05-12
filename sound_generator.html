@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Generator</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .controls {
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sound Generator</h1>
+    <div class="controls">
+        <button onclick="generateShootSound()">Generate Shoot Sound</button>
+        <button onclick="generateHitSound()">Generate Hit Sound</button>
+        <button onclick="generatePowerUpSound()">Generate Power-up Sound</button>
+        <button onclick="generateGameOverSound()">Generate Game Over Sound</button>
+        <button onclick="generateBackgroundMusic()">Generate Background Music</button>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function generateShootSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+            
+            downloadSound('shoot.mp3', 0.1);
+        }
+
+        function generateHitSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+            
+            downloadSound('hit.mp3', 0.2);
+        }
+
+        function generatePowerUpSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.3);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.3);
+            
+            downloadSound('powerup.mp3', 0.3);
+        }
+
+        function generateGameOverSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(55, audioContext.currentTime + 1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1);
+            
+            downloadSound('gameover.mp3', 1);
+        }
+
+        function generateBackgroundMusic() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 5);
+            
+            downloadSound('background.mp3', 5);
+        }
+
+        function downloadSound(filename, duration) {
+            // Note: This is a simplified version. In a real implementation,
+            // you would need to properly encode the audio data to MP3 format.
+            // For this example, we'll just create a silent MP3 file.
+            const silentData = new Uint8Array(128);
+            const blob = new Blob([silentData], { type: 'audio/mp3' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 

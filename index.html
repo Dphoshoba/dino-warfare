@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino Warfare - Humans vs Dinosaurs</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-title">DinoWarfare</div>
+    <div class="dynamic-bg"></div>
+    <div class="game-container">
+        <div class="player-setup glass" id="playerSetup">
+            <h3>Welcome, Commander!</h3>
+            <div class="avatar-preview">
+                <img id="avatarPreviewImg" src="sprites/sprites_player.png" alt="Avatar Preview" class="avatar">
+            </div>
+            <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="16">
+            <input type="file" id="playerPhotoInput" accept="image/*">
+            <button id="playerSetupBtn" class="neon">Start Game</button>
+        </div>
+        <canvas id="bgStars" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-5;pointer-events:none;"></canvas>
+        <canvas id="bgGrid" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-4;pointer-events:none;"></canvas>
+        <canvas id="bgNebula" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-3;pointer-events:none;"></canvas>
+        <canvas id="bgSparks" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-2;pointer-events:none;"></canvas>
+        <canvas id="bgParticles" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-1;pointer-events:none;"></canvas>
+        <div class="hud glass">
+            <div class="profile">
+                <div class="avatar-glow">
+                    <img id="playerAvatar" src="sprites/sprites_player.png" alt="Player" class="avatar">
+                </div>
+                <div class="player-status">
+                    <span id="playerStatus">READY</span>
+                </div>
+            </div>
+            <div class="hud-stats">
+                <div class="hud-item">
+                    <svg class="hud-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#00eaff" stroke-width="2"/></svg>
+                    <span id="score" class="hud-value">0</span>
+                </div>
+                <div class="hud-item health-ammo">
+                    <svg class="hud-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="4" rx="2" fill="#00ff99" /></svg>
+                    <div class="health-bar-bg">
+                        <div class="health-bar-fill" id="healthBar"></div>
+                    </div>
+                    <span id="health" class="hud-value">100</span>
+                    <span class="ammo-label">AMMO</span>
+                    <span id="ammo" class="hud-value">30</span>
+                    <span class="ammo-label">LIVES</span>
+                    <span id="lives" class="hud-value">4</span>
+                </div>
+            </div>
+            <div class="hud-controls">
+                <button id="soundToggle" class="hud-btn neon">🔊</button>
+                <button id="pauseButton" class="hud-btn neon">⏸️</button>
+                <button id="endButton" class="hud-btn neon">⏹️</button>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="game-over glass hidden" id="gameOver">
+            <div class="gameover-panel">
+                <h2>GAME OVER</h2>
+                <p>Final Score: <span id="finalScore">0</span></p>
+                <button id="restartButton" class="neon">Play Again</button>
+                <button id="shareButton" class="neon">Share</button>
+            </div>
+        </div>
+        <div class="weapon-hud glass">
+            <svg class="weapon-icon" id="weaponIcon" viewBox="0 0 24 24"></svg>
+            <div class="weapon-bar-bg">
+                <div class="weapon-bar-fill" id="weaponBar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audio elements -->
+    <audio id="shootSound" src="sounds/sounds_shoot.wav" preload="auto"></audio>
+    <audio id="hitSound" src="sounds/sounds_hit.wav" preload="auto"></audio>
+    <audio id="powerUpSound" src="sounds/sounds_powerup.wav" preload="auto"></audio>
+    <audio id="gameOverSound" src="sounds/sounds_gameover.wav" preload="auto"></audio>
+    <audio id="backgroundMusic" src="sounds/sounds_background.wav" loop preload="auto"></audio>
+    
+    <script src="game.js"></script>
+    <canvas id="shareCanvas" width="400" height="300" style="display:none"></canvas>
+    <footer class="app-footer">Created by <span>Echoes &amp; Visions</span> <img src="assets/logo.png" alt="Echoes & Visions Logo" class="footer-logo"></footer>
+</body>
+</html> 

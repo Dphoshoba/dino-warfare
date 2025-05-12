@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino Warfare Asset Generator</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            margin: 20px;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+        }
+        canvas {
+            border: 1px solid #333;
+            margin: 10px;
+            background: #000;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dino Warfare Asset Generator</h1>
+    <div class="container">
+        <div class="section">
+            <h2>Sprites</h2>
+            <canvas id="spriteCanvas" width="256" height="64"></canvas>
+            <button onclick="generateAllSprites()">Generate All Sprites</button>
+            <button onclick="generatePterodactyl()">Generate Pterodactyl</button>
+            <button onclick="generatePowerUp()">Generate Power-up</button>
+            <button onclick="generateStegosaurus()">Generate Stegosaurus</button>
+            <button onclick="generateAnkylosaurus()">Generate Ankylosaurus</button>
+            <button onclick="generateVelociraptor()">Generate Velociraptor</button>
+            <button onclick="generateSpinosaurus()">Generate Spinosaurus</button>
+            <button onclick="generatePachycephalosaurus()">Generate Pachycephalosaurus</button>
+            <div id="spriteStatus" class="status"></div>
+        </div>
+        <div class="section">
+            <h2>Sounds</h2>
+            <button onclick="generateAllSounds()">Generate All Sounds</button>
+            <div id="soundStatus" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        const spriteCanvas = document.getElementById('spriteCanvas');
+        const spriteCtx = spriteCanvas.getContext('2d');
+        const spriteStatus = document.getElementById('spriteStatus');
+        const soundStatus = document.getElementById('soundStatus');
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function downloadAsset(data, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = data;
+            link.click();
+        }
+
+        function generateSprite(name, drawFunction) {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            drawFunction();
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, `sprites/${name}.png`);
+            return dataUrl;
+        }
+
+        function generateSound(name, generateFunction) {
+            const audioData = generateFunction();
+            const blob = new Blob([audioData], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            downloadAsset(url, `sounds/${name}.wav`);
+            URL.revokeObjectURL(url);
+        }
+
+        function generateAllSprites() {
+            spriteStatus.textContent = 'Generating sprites...';
+            
+            // Player sprite
+            generateSprite('player', () => {
+                for (let i = 0; i < 4; i++) {
+                    spriteCtx.save();
+                    spriteCtx.translate(i * 64, 0);
+                    spriteCtx.fillStyle = '#4CAF50';
+                    spriteCtx.fillRect(12, 12, 40, 40);
+                    spriteCtx.fillStyle = '#333';
+                    spriteCtx.fillRect(32, 0, 8, 20);
+                    if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                    spriteCtx.restore();
+                }
+            });
+
+            // Raptor sprite
+            generateSprite('raptor', () => {
+                for (let i = 0; i < 4; i++) {
+                    spriteCtx.save();
+                    spriteCtx.translate(i * 64, 0);
+                    // Body
+                    spriteCtx.fillStyle = '#A0522D'; // Brown
+                    spriteCtx.beginPath();
+                    spriteCtx.ellipse(32, 32, 22, 16, 0, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Tail
+                    spriteCtx.strokeStyle = '#A0522D';
+                    spriteCtx.lineWidth = 8;
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(10, 40);
+                    spriteCtx.lineTo(0, 50);
+                    spriteCtx.stroke();
+                    // Head
+                    spriteCtx.fillStyle = '#8B4513';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(48, 24, 10, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Eye
+                    spriteCtx.fillStyle = '#fff';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(52, 22, 2, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    spriteCtx.fillStyle = '#000';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(53, 22, 1, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Claws
+                    spriteCtx.strokeStyle = '#000';
+                    spriteCtx.lineWidth = 2;
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(20, 48);
+                    spriteCtx.lineTo(18, 56);
+                    spriteCtx.moveTo(44, 48);
+                    spriteCtx.lineTo(46, 56);
+                    spriteCtx.stroke();
+                    // Animation
+                    if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                    spriteCtx.restore();
+                }
+            });
+
+            // Triceratops sprite
+            generateSprite('triceratops', () => {
+                for (let i = 0; i < 4; i++) {
+                    spriteCtx.save();
+                    spriteCtx.translate(i * 64, 0);
+                    // Body
+                    spriteCtx.fillStyle = '#228B22'; // Forest green
+                    spriteCtx.beginPath();
+                    spriteCtx.ellipse(32, 36, 22, 16, 0, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Head
+                    spriteCtx.fillStyle = '#2E8B57';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(48, 28, 12, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Horns
+                    spriteCtx.strokeStyle = '#fff';
+                    spriteCtx.lineWidth = 3;
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(54, 20);
+                    spriteCtx.lineTo(60, 10);
+                    spriteCtx.moveTo(44, 20);
+                    spriteCtx.lineTo(38, 10);
+                    spriteCtx.moveTo(48, 36);
+                    spriteCtx.lineTo(48, 48);
+                    spriteCtx.stroke();
+                    // Eye
+                    spriteCtx.fillStyle = '#fff';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(54, 28, 2, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    spriteCtx.fillStyle = '#000';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(55, 28, 1, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Animation
+                    if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                    spriteCtx.restore();
+                }
+            });
+
+            // T-Rex sprite
+            generateSprite('trex', () => {
+                for (let i = 0; i < 4; i++) {
+                    spriteCtx.save();
+                    spriteCtx.translate(i * 64, 0);
+                    // Body
+                    spriteCtx.fillStyle = '#556B2F'; // Olive green
+                    spriteCtx.beginPath();
+                    spriteCtx.ellipse(32, 36, 22, 18, 0, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Head
+                    spriteCtx.fillStyle = '#6B8E23';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(48, 24, 14, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Jaw
+                    spriteCtx.fillStyle = '#BDB76B';
+                    spriteCtx.fillRect(48, 32, 14, 6);
+                    // Eye
+                    spriteCtx.fillStyle = '#fff';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(54, 20, 2, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    spriteCtx.fillStyle = '#000';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(55, 20, 1, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    // Teeth
+                    spriteCtx.strokeStyle = '#fff';
+                    spriteCtx.lineWidth = 1;
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(54, 36);
+                    spriteCtx.lineTo(56, 38);
+                    spriteCtx.moveTo(58, 36);
+                    spriteCtx.lineTo(60, 38);
+                    spriteCtx.stroke();
+                    // Animation
+                    if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                    spriteCtx.restore();
+                }
+            });
+
+            // Bullet sprite
+            generateSprite('bullet', () => {
+                for (let i = 0; i < 2; i++) {
+                    spriteCtx.save();
+                    spriteCtx.translate(i * 32, 0);
+                    spriteCtx.fillStyle = '#FFD700';
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(16, 0);
+                    spriteCtx.lineTo(32, 16);
+                    spriteCtx.lineTo(0, 16);
+                    spriteCtx.closePath();
+                    spriteCtx.fill();
+                    if (i === 1) spriteCtx.translate(0, 2);
+                    spriteCtx.restore();
+                }
+            });
+
+            // Power-up sprite
+            generateSprite('powerup', () => {
+                for (let i = 0; i < 4; i++) {
+                    spriteCtx.save();
+                    spriteCtx.translate(i * 32, 0);
+                    spriteCtx.fillStyle = i === 0 ? '#FF0000' : i === 1 ? '#FFFF00' : i === 2 ? '#00FFFF' : '#FF00FF';
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(16, 16, 12, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                    spriteCtx.restore();
+                }
+            });
+
+            spriteStatus.textContent = 'All sprites generated successfully!';
+        }
+
+        function generateAllSounds() {
+            soundStatus.textContent = 'Generating sounds...';
+            
+            // Shoot sound
+            const shootOsc = audioContext.createOscillator();
+            const shootGain = audioContext.createGain();
+            shootOsc.connect(shootGain);
+            shootGain.connect(audioContext.destination);
+            shootOsc.type = 'square';
+            shootOsc.frequency.setValueAtTime(880, audioContext.currentTime);
+            shootOsc.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.1);
+            shootGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            shootGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            shootOsc.start();
+            shootOsc.stop(audioContext.currentTime + 0.1);
+
+            // Hit sound
+            const hitOsc = audioContext.createOscillator();
+            const hitGain = audioContext.createGain();
+            hitOsc.connect(hitGain);
+            hitGain.connect(audioContext.destination);
+            hitOsc.type = 'sine';
+            hitOsc.frequency.setValueAtTime(220, audioContext.currentTime);
+            hitOsc.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.2);
+            hitGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            hitGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            hitOsc.start();
+            hitOsc.stop(audioContext.currentTime + 0.2);
+
+            // Power-up sound
+            const powerOsc = audioContext.createOscillator();
+            const powerGain = audioContext.createGain();
+            powerOsc.connect(powerGain);
+            powerGain.connect(audioContext.destination);
+            powerOsc.type = 'sine';
+            powerOsc.frequency.setValueAtTime(440, audioContext.currentTime);
+            powerOsc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.3);
+            powerGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            powerGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            powerOsc.start();
+            powerOsc.stop(audioContext.currentTime + 0.3);
+
+            // Game over sound
+            const gameOverOsc = audioContext.createOscillator();
+            const gameOverGain = audioContext.createGain();
+            gameOverOsc.connect(gameOverGain);
+            gameOverGain.connect(audioContext.destination);
+            gameOverOsc.type = 'sawtooth';
+            gameOverOsc.frequency.setValueAtTime(220, audioContext.currentTime);
+            gameOverOsc.frequency.exponentialRampToValueAtTime(55, audioContext.currentTime + 1);
+            gameOverGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gameOverGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+            gameOverOsc.start();
+            gameOverOsc.stop(audioContext.currentTime + 1);
+
+            // Background music
+            const bgOsc = audioContext.createOscillator();
+            const bgGain = audioContext.createGain();
+            bgOsc.connect(bgGain);
+            bgGain.connect(audioContext.destination);
+            bgOsc.type = 'sine';
+            bgOsc.frequency.setValueAtTime(220, audioContext.currentTime);
+            bgGain.gain.setValueAtTime(0.1, audioContext.currentTime);
+            bgOsc.start();
+            bgOsc.stop(audioContext.currentTime + 5);
+
+            soundStatus.textContent = 'All sounds generated successfully!';
+        }
+
+        function generatePterodactyl() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 4; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 64, 0);
+                // Wings
+                spriteCtx.fillStyle = '#C2B280'; // Sandy
+                spriteCtx.beginPath();
+                spriteCtx.moveTo(32, 32);
+                spriteCtx.lineTo(10, 54);
+                spriteCtx.lineTo(54, 54);
+                spriteCtx.closePath();
+                spriteCtx.fill();
+                // Body
+                spriteCtx.fillStyle = '#A0522D';
+                spriteCtx.beginPath();
+                spriteCtx.ellipse(32, 36, 10, 18, 0, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Head
+                spriteCtx.fillStyle = '#8B4513';
+                spriteCtx.beginPath();
+                spriteCtx.arc(32, 20, 8, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Beak
+                spriteCtx.fillStyle = '#FFD700';
+                spriteCtx.beginPath();
+                spriteCtx.moveTo(32, 16);
+                spriteCtx.lineTo(40, 8);
+                spriteCtx.lineTo(32, 20);
+                spriteCtx.closePath();
+                spriteCtx.fill();
+                // Eye
+                spriteCtx.fillStyle = '#000';
+                spriteCtx.beginPath();
+                spriteCtx.arc(36, 18, 1.5, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Animation
+                if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_pterodactyl.png');
+            spriteStatus.textContent = 'Pterodactyl sprite generated!';
+        }
+
+        function generatePowerUp() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 6; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 32, 0);
+                // Power-up circle color
+                let color;
+                switch(i) {
+                    case 0: color = '#FF0000'; break; // Health
+                    case 1: color = '#FFFF00'; break; // Ammo
+                    case 2: color = '#00FFFF'; break; // Speed
+                    case 3: color = '#00FF00'; break; // Shield
+                    case 4: color = '#FFA500'; break; // Rapid fire
+                    default: color = '#FF00FF'; // Special/other
+                }
+                spriteCtx.fillStyle = color;
+                spriteCtx.beginPath();
+                spriteCtx.arc(16, 16, 12, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Icon overlay
+                spriteCtx.fillStyle = '#000';
+                if (i === 0) { // Health
+                    spriteCtx.fillRect(14, 10, 4, 12);
+                    spriteCtx.fillRect(10, 14, 12, 4);
+                } else if (i === 1) { // Ammo
+                    spriteCtx.fillRect(10, 14, 12, 4);
+                } else if (i === 2) { // Speed
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(10, 16);
+                    spriteCtx.lineTo(22, 16);
+                    spriteCtx.lineTo(16, 22);
+                    spriteCtx.fill();
+                } else if (i === 3) { // Shield
+                    spriteCtx.strokeStyle = '#000';
+                    spriteCtx.lineWidth = 2;
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(16, 16, 8, Math.PI, 2 * Math.PI);
+                    spriteCtx.lineTo(16, 24);
+                    spriteCtx.closePath();
+                    spriteCtx.stroke();
+                } else if (i === 4) { // Rapid fire
+                    spriteCtx.fillStyle = '#000';
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(12, 12);
+                    spriteCtx.lineTo(20, 16);
+                    spriteCtx.lineTo(12, 20);
+                    spriteCtx.closePath();
+                    spriteCtx.fill();
+                }
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_powerup.png');
+            spriteStatus.textContent = 'Power-up sprites (with new types) generated!';
+        }
+
+        function generateStegosaurus() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 4; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 64, 0);
+                // Body
+                spriteCtx.fillStyle = '#4682B4'; // Steel blue
+                spriteCtx.beginPath();
+                spriteCtx.ellipse(32, 36, 22, 14, 0, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Plates
+                spriteCtx.fillStyle = '#90EE90';
+                for (let p = 0; p < 5; p++) {
+                    spriteCtx.beginPath();
+                    spriteCtx.moveTo(16 + p * 8, 22);
+                    spriteCtx.lineTo(20 + p * 8, 10);
+                    spriteCtx.lineTo(24 + p * 8, 22);
+                    spriteCtx.closePath();
+                    spriteCtx.fill();
+                }
+                // Head
+                spriteCtx.fillStyle = '#5F9EA0';
+                spriteCtx.beginPath();
+                spriteCtx.arc(48, 28, 8, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Eye
+                spriteCtx.fillStyle = '#fff';
+                spriteCtx.beginPath();
+                spriteCtx.arc(52, 28, 2, 0, Math.PI * 2);
+                spriteCtx.fill();
+                spriteCtx.fillStyle = '#000';
+                spriteCtx.beginPath();
+                spriteCtx.arc(53, 28, 1, 0, Math.PI * 2);
+                spriteCtx.fill();
+                if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_stegosaurus.png');
+            spriteStatus.textContent = 'Stegosaurus sprite generated!';
+        }
+
+        function generateAnkylosaurus() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 4; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 64, 0);
+                // Body
+                spriteCtx.fillStyle = '#A9A9A9'; // Dark gray
+                spriteCtx.beginPath();
+                spriteCtx.ellipse(32, 36, 22, 14, 0, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Armor bumps
+                spriteCtx.fillStyle = '#D2B48C';
+                for (let b = 0; b < 6; b++) {
+                    spriteCtx.beginPath();
+                    spriteCtx.arc(16 + b * 8, 30, 3, 0, Math.PI * 2);
+                    spriteCtx.fill();
+                }
+                // Tail club
+                spriteCtx.fillStyle = '#8B4513';
+                spriteCtx.beginPath();
+                spriteCtx.arc(10, 50, 6, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Head
+                spriteCtx.fillStyle = '#8B7355';
+                spriteCtx.beginPath();
+                spriteCtx.arc(48, 28, 8, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Eye
+                spriteCtx.fillStyle = '#fff';
+                spriteCtx.beginPath();
+                spriteCtx.arc(52, 28, 2, 0, Math.PI * 2);
+                spriteCtx.fill();
+                spriteCtx.fillStyle = '#000';
+                spriteCtx.beginPath();
+                spriteCtx.arc(53, 28, 1, 0, Math.PI * 2);
+                spriteCtx.fill();
+                if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_ankylosaurus.png');
+            spriteStatus.textContent = 'Ankylosaurus sprite generated!';
+        }
+
+        function generateVelociraptor() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 4; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 64, 0);
+                // Body
+                spriteCtx.fillStyle = '#FFA500'; // Orange
+                spriteCtx.beginPath();
+                spriteCtx.ellipse(32, 32, 18, 12, 0, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Tail
+                spriteCtx.strokeStyle = '#FFA500';
+                spriteCtx.lineWidth = 6;
+                spriteCtx.beginPath();
+                spriteCtx.moveTo(16, 40);
+                spriteCtx.lineTo(0, 50);
+                spriteCtx.stroke();
+                // Head
+                spriteCtx.fillStyle = '#FFD700';
+                spriteCtx.beginPath();
+                spriteCtx.arc(48, 24, 8, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Eye
+                spriteCtx.fillStyle = '#000';
+                spriteCtx.beginPath();
+                spriteCtx.arc(52, 22, 2, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Claws
+                spriteCtx.strokeStyle = '#000';
+                spriteCtx.lineWidth = 2;
+                spriteCtx.beginPath();
+                spriteCtx.moveTo(20, 44);
+                spriteCtx.lineTo(18, 52);
+                spriteCtx.moveTo(44, 44);
+                spriteCtx.lineTo(46, 52);
+                spriteCtx.stroke();
+                if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_velociraptor.png');
+            spriteStatus.textContent = 'Velociraptor sprite generated!';
+        }
+
+        function generateSpinosaurus() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 4; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 64, 0);
+                // Body
+                spriteCtx.fillStyle = '#2F4F4F'; // Dark slate gray
+                spriteCtx.beginPath();
+                spriteCtx.ellipse(32, 36, 22, 16, 0, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Sail
+                spriteCtx.fillStyle = '#8B0000';
+                spriteCtx.beginPath();
+                spriteCtx.moveTo(20, 36);
+                spriteCtx.lineTo(32, 10);
+                spriteCtx.lineTo(44, 36);
+                spriteCtx.closePath();
+                spriteCtx.fill();
+                // Head
+                spriteCtx.fillStyle = '#556B2F';
+                spriteCtx.beginPath();
+                spriteCtx.arc(48, 28, 10, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Eye
+                spriteCtx.fillStyle = '#fff';
+                spriteCtx.beginPath();
+                spriteCtx.arc(52, 28, 2, 0, Math.PI * 2);
+                spriteCtx.fill();
+                spriteCtx.fillStyle = '#000';
+                spriteCtx.beginPath();
+                spriteCtx.arc(53, 28, 1, 0, Math.PI * 2);
+                spriteCtx.fill();
+                if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_spinosaurus.png');
+            spriteStatus.textContent = 'Spinosaurus sprite generated!';
+        }
+
+        function generatePachycephalosaurus() {
+            spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+            for (let i = 0; i < 4; i++) {
+                spriteCtx.save();
+                spriteCtx.translate(i * 64, 0);
+                // Body
+                spriteCtx.fillStyle = '#800080'; // Purple
+                spriteCtx.beginPath();
+                spriteCtx.ellipse(32, 36, 18, 12, 0, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Head (dome)
+                spriteCtx.fillStyle = '#FF6347';
+                spriteCtx.beginPath();
+                spriteCtx.arc(48, 24, 10, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Dome highlight
+                spriteCtx.fillStyle = '#FFDAB9';
+                spriteCtx.beginPath();
+                spriteCtx.arc(48, 20, 6, 0, Math.PI * 2);
+                spriteCtx.fill();
+                // Eye
+                spriteCtx.fillStyle = '#000';
+                spriteCtx.beginPath();
+                spriteCtx.arc(52, 22, 2, 0, Math.PI * 2);
+                spriteCtx.fill();
+                if (i === 1 || i === 3) spriteCtx.translate(0, 2);
+                spriteCtx.restore();
+            }
+            const dataUrl = spriteCanvas.toDataURL('image/png');
+            downloadAsset(dataUrl, 'sprites/sprites_pachycephalosaurus.png');
+            spriteStatus.textContent = 'Pachycephalosaurus sprite generated!';
+        }
+    </script>
+</body>
+</html> 
