@@ -32,14 +32,25 @@ export default defineConfig({
         theme_color: '#00ff00',
         icons: [
           {
-            src: '/icons/icon-192.png',
+            src: '/sprites/logo.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/sprites/logo.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ],
+        screenshots: [
+          {
+            src: '/sprites/logo.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'DinoWarfare Gameplay'
           }
         ]
       }
