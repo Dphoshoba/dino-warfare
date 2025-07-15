@@ -3,10 +3,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: './', // Ensures relative asset paths for Netlify
+  publicDir: 'assets', // Copy assets folder to dist
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     minify: true,
+    assetsDir: 'assets', // Ensure assets go to assets folder
   },
   plugins: [
     VitePWA({
