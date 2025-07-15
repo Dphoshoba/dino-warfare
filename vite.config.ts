@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: './', // Ensures relative asset paths for Netlify
   build: {
     outDir: 'dist',
     emptyOutDir: true,
