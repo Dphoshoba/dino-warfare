@@ -39,43 +39,43 @@ function checkSubscriptionStatus(level) {
 
 // Load images
 const playerImg = new Image();
-playerImg.src = 'assets/sprites/sprites_player.png';
+playerImg.src = '/sprites/sprites_player.png';
 const raptorImg = new Image();
-raptorImg.src = 'assets/sprites/sprites_raptor.png';
+raptorImg.src = '/sprites/sprites_raptor.png';
 const trexImg = new Image();
-trexImg.src = 'assets/sprites/sprites_trex.png';
+trexImg.src = '/sprites/sprites_trex.png';
 const motherDinoImg = new Image();
-motherDinoImg.src = 'assets/sprites/sprites_motherdino.png';
+motherDinoImg.src = '/sprites/sprites_motherdino.png';
 const bulletImg = new Image();
-bulletImg.src = 'assets/sprites/sprites_bullet.png';
+bulletImg.src = '/sprites/sprites_bullet.png';
 const powerupImg = new Image();
-powerupImg.src = 'assets/sprites/sprites_powerup.png';
+powerupImg.src = '/sprites/sprites_powerup.png';
 const velociraptorImg = new Image();
-velociraptorImg.src = 'assets/sprites/sprites_velociraptor.png';
+velociraptorImg.src = '/sprites/sprites_velociraptor.png';
 const triceratopsImg = new Image();
-triceratopsImg.src = 'assets/sprites/sprites_triceratops.png';
+triceratopsImg.src = '/sprites/sprites_triceratops.png';
 const stegosaurusImg = new Image();
-stegosaurusImg.src = 'assets/sprites/sprites_stegosaurus.png';
+stegosaurusImg.src = '/sprites/sprites_stegosaurus.png';
 const pterodactylImg = new Image();
-pterodactylImg.src = 'assets/sprites/sprites_pterodactyl.png';
+pterodactylImg.src = '/sprites/sprites_pterodactyl.png';
 const spinosaurusImg = new Image();
-spinosaurusImg.src = 'assets/sprites/sprites_spinosaurus.png';
+spinosaurusImg.src = '/sprites/sprites_spinosaurus.png';
 const ankylosaurusImg = new Image();
-ankylosaurusImg.src = 'assets/sprites/sprites_ankylosaurus.png';
+ankylosaurusImg.src = '/sprites/sprites_ankylosaurus.png';
 const pachycephalosaurusImg = new Image();
-pachycephalosaurusImg.src = 'assets/sprites/sprites_pachycephalosaurus.png';
+pachycephalosaurusImg.src = '/sprites/sprites_pachycephalosaurus.png';
 
 // Player avatar image
 const playerAvatarImg = new Image();
 
 // Load sounds with error handling
-const shootSound = new Audio('./assets/sounds/sounds_shoot.wav');
-const hitSound = new Audio('./assets/sounds/sounds_hit.wav');
-const gameOverSound = new Audio('./assets/sounds/sounds_gameover.wav');
-const regenSound = new Audio('./assets/sounds/sounds_regen.wav');
-const shieldSound = new Audio('./assets/sounds/sounds_shield.wav');
-const bgMusic = new Audio('./assets/sounds/sounds_background.wav');
-const bossIntroSound = new Audio('./assets/sounds/sounds_boss_intro.mp3');
+const shootSound = new Audio('/sounds/sounds_shoot.wav');
+const hitSound = new Audio('/sounds/sounds_hit.wav');
+const gameOverSound = new Audio('/sounds/sounds_gameover.wav');
+const regenSound = new Audio('/sounds/sounds_regen.wav');
+const shieldSound = new Audio('/sounds/sounds_shield.wav');
+const bgMusic = new Audio('/sounds/sounds_background.wav');
+const bossIntroSound = new Audio('/sounds/sounds_boss_intro.mp3');
 
 // Sound error handling
 shootSound.addEventListener('error', () => console.warn('Failed to load shoot sound'));
@@ -1272,10 +1272,11 @@ function draw() {
     return;
   }
 
+  // Defensive drawImage usage in draw()
   // Draw player (use avatar if available, otherwise default sprite)
-  if (playerData.avatar && playerAvatarImg.complete) {
+  if (playerData.avatar && playerAvatarImg.complete && playerAvatarImg.naturalWidth > 0) {
     ctx.drawImage(playerAvatarImg, player.x - 30, player.y - 30, 60, 60);
-  } else {
+  } else if (playerImg.complete && playerImg.naturalWidth > 0) {
     ctx.drawImage(playerImg, player.x - 30, player.y - 30, 60, 60);
   }
 
@@ -1298,7 +1299,9 @@ function draw() {
 
   // Draw enemies
   enemies.forEach(enemy => {
-    ctx.drawImage(enemy.img, enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+    if (enemy.img && enemy.img.complete && enemy.img.naturalWidth > 0) {
+      ctx.drawImage(enemy.img, enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+    }
   });
 
   // Draw boss enemies (Mother Dino with proper scaling)
@@ -1307,7 +1310,9 @@ function draw() {
     const scale = bossType.scale || 1.0;
     const width = 120 * scale;
     const height = 120 * scale;
-    ctx.drawImage(boss.img, boss.x, boss.y, width, height);
+    if (boss.img && boss.img.complete && boss.img.naturalWidth > 0) {
+      ctx.drawImage(boss.img, boss.x, boss.y, width, height);
+    }
     // Health bar
     const isMotherDino = boss.name.includes("Mother Dino");
     if (isMotherDino) {
