@@ -1,0 +1,37 @@
+{
+    "name": "DinoWarfare - Premium Edition",
+    "short_name": "DinoWarfare",
+    "description": "An epic dinosaur battle game with authentication, subscription system, and premium features",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0d0d0d",
+    "theme_color": "#4CAF50",
+    "orientation": "landscape",
+    "scope": "/",
+    "lang": "en",
+    "categories": ["games", "entertainment"],
+    "icons": [
+        {
+            "src": "assets/sprites/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/sprites/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "assets/sprites/logo.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "DinoWarfare Gameplay"
+        }
+    ]
+}
+  

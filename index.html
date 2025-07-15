@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0d0d0d"/>
+  <title>DinoWarfare</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+  <!-- Sign-in Screen -->
+  <div id="signInScreen">
+    <div class="sign-in-container">
+      <div class="logo-section">
+        <img src="assets/sprites/logo.png" alt="Agency Logo" class="agency-logo">
+        <h1>🦖 DinoWarfare</h1>
+        <p class="creator">Created by David Oshoba George</p>
+      </div>
+      
+      <!-- Login Form -->
+      <div id="loginForm" class="auth-form">
+        <h2>Sign In</h2>
+        <div class="input-group">
+          <input type="email" id="loginEmail" placeholder="Email" required>
+        </div>
+        <div class="input-group">
+          <input type="password" id="loginPassword" placeholder="Password" required>
+        </div>
+        <div class="button-group">
+          <button id="loginBtn" class="primary-btn">🔐 Sign In</button>
+          <button id="showRegisterBtn" class="secondary-btn">📝 New Account</button>
+        </div>
+        <div class="auth-links">
+          <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="auth-form" style="display: none;">
+        <h2>Create Account</h2>
+        <div class="input-group">
+          <input type="text" id="registerName" placeholder="Full Name" required>
+        </div>
+        <div class="input-group">
+          <input type="email" id="registerEmail" placeholder="Email" required>
+        </div>
+        <div class="input-group">
+          <input type="password" id="registerPassword" placeholder="Password (min 6 characters)" required>
+        </div>
+        <div class="input-group">
+          <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        </div>
+        
+        <!-- Avatar Upload Section -->
+        <div class="avatar-section">
+          <h3>Choose Your Avatar</h3>
+          <div class="avatar-preview" id="registerAvatarPreview">
+            <img src="assets/sprites/player.png" alt="Default Avatar" id="registerAvatarImage">
+            <div class="avatar-overlay">
+              <span>📷</span>
+              <p>Click to upload avatar</p>
+            </div>
+          </div>
+          <input type="file" id="registerAvatarInput" accept="image/*" style="display: none;">
+          <p class="avatar-hint">Upload a profile picture (optional)</p>
+        </div>
+        
+        <div class="button-group">
+          <button id="registerBtn" class="primary-btn">📝 Create Account</button>
+          <button id="showLoginBtn" class="secondary-btn">🔐 Back to Sign In</button>
+        </div>
+      </div>
+
+      <!-- Profile Setup Form -->
+      <div id="profileForm" class="auth-form" style="display: none;">
+        <h2>Complete Your Profile</h2>
+        <div class="avatar-section">
+          <div class="avatar-preview" id="avatarPreview">
+            <img src="assets/sprites/player.png" alt="Default Avatar" id="avatarImage">
+            <div class="avatar-overlay">
+              <span>📷</span>
+              <p>Click to upload avatar</p>
+            </div>
+          </div>
+          <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+        </div>
+        <div class="input-group">
+          <input type="text" id="profileName" placeholder="Display Name" maxlength="20">
+        </div>
+        <div class="button-group">
+          <button id="saveProfileBtn" class="primary-btn">💾 Save Profile</button>
+        </div>
+      </div>
+
+      <!-- Subscription Modal -->
+      <div id="subscriptionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>🎮 Premium Access Required</h2>
+            <span class="close">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="subscription-info">
+              <h3>You've completed the free trial!</h3>
+              <p>You've reached Level 3 and unlocked the Fruits of the Spirit themes. Continue your journey with unlimited access!</p>
+              
+              <div class="subscription-benefits">
+                <h4>🌟 Premium Benefits:</h4>
+                <ul>
+                  <li>✅ Unlimited levels and progression</li>
+                  <li>✅ All Fruits of the Spirit themes</li>
+                  <li>✅ Enhanced boss battles with special abilities</li>
+                  <li>✅ Premium power-ups (Laser, Nuke, Time Slow, Multi-Shot)</li>
+                  <li>✅ Particle effects and visual enhancements</li>
+                  <li>✅ Invincible shield and special abilities</li>
+                  <li>✅ Priority support</li>
+                </ul>
+              </div>
+              
+              <div class="pricing">
+                <div class="price-card">
+                  <h3>One-Time Payment</h3>
+                  <div class="price">$2.50</div>
+                  <p>Lifetime access to DinoWarfare Premium</p>
+                  
+                  <!-- Stripe Payment Form -->
+                  <div id="stripe-payment-form" style="display: none;">
+                    <form id="payment-form">
+                      <div class="form-row">
+                        <label for="card-element">Credit or debit card</label>
+                        <div id="card-element"></div>
+                        <div id="card-errors" role="alert"></div>
+                      </div>
+                      <button type="submit" class="primary-btn payment-button">
+                        💳 Pay $2.50
+                      </button>
+                    </form>
+                  </div>
+                  
+                  <!-- Payment Form Handler -->
+                  <script>
+                    // Wait for DOM to be ready
+                    document.addEventListener('DOMContentLoaded', function() {
+                      const paymentForm = document.getElementById('payment-form');
+                      if (paymentForm) {
+                        paymentForm.addEventListener('submit', async (e) => {
+                          e.preventDefault();
+                          console.log('Payment form submitted');
+                          
+                          const submitButton = e.target.querySelector('button[type="submit"]');
+                          const originalText = submitButton.textContent;
+                          submitButton.textContent = 'Processing...';
+                          submitButton.disabled = true;
+                          
+                          try {
+                            if (window.stripePaymentProcessor) {
+                              console.log('Processing payment with Stripe...');
+                              const result = await window.stripePaymentProcessor.processPayment();
+                              console.log('Payment result:', result);
+                              
+                              if (result.success) {
+                                // Update user subscription
+                                const users = getUsers();
+                                users[currentUser.email].subscription = true;
+                                users[currentUser.email].subscriptionDate = new Date().toISOString();
+                                saveUsers(users);
+
+                                // Update subscriptions
+                                const subscriptions = getSubscriptions();
+                                subscriptions[currentUser.email] = {
+                                  email: currentUser.email,
+                                  subscribed: true,
+                                  date: new Date().toISOString(),
+                                  amount: 2.50,
+                                  transactionId: result.transactionId
+                                };
+                                saveSubscriptions(subscriptions);
+
+                                currentUser = users[currentUser.email];
+                                
+                                // Close modal and continue game
+                                subscriptionModal.style.display = 'none';
+                                alert('Thank you for subscribing! You now have unlimited access to DinoWarfare with all premium features!');
+                                
+                                // Refresh the game to apply premium features
+                                if (window.startGameFromAuth) {
+                                  window.startGameFromAuth();
+                                }
+                              } else {
+                                console.error('Payment failed:', result.error);
+                                if (window.stripePaymentProcessor.handlePaymentError) {
+                                  window.stripePaymentProcessor.handlePaymentError(result.error);
+                                } else {
+                                  alert('Payment failed: ' + result.error);
+                                }
+                              }
+                            } else {
+                              console.log('Stripe not available, using demo mode');
+                              alert('Payment system not available. Please try the demo subscription.');
+                            }
+                          } catch (error) {
+                            console.error('Payment error:', error);
+                            alert('Payment failed. Please try again or use the demo subscription.');
+                          } finally {
+                            submitButton.textContent = originalText;
+                            submitButton.disabled = false;
+                          }
+                        });
+                      } else {
+                        console.log('Payment form not found');
+                      }
+                    });
+                  </script>
+                  
+                  <!-- Demo Payment Button (for testing) -->
+                  <button id="demoSubscribeBtn" class="primary-btn">💳 Subscribe Now (Demo)</button>
+                  <button id="realPaymentBtn" class="secondary-btn" style="margin-top: 10px;">💳 Real Payment (Stripe)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="game-info">
+        <h3>🎮 How to Play</h3>
+        <ul>
+          <li>Use <strong>WASD</strong> or <strong>Arrow Keys</strong> to move</li>
+          <li>Press <strong>Spacebar</strong> to shoot</li>
+          <li>Collect power-ups to enhance your abilities</li>
+          <li>Buy <strong>Extra Diagonal Bullets</strong> in shop for additional 4-way fire!</li>
+          <li>Defeat the Mother Dino boss to advance</li>
+          <li>Each level represents a Fruit of the Spirit</li>
+          <li><strong>Free Trial:</strong> Play Levels 1-3 for free!</li>
+        </ul>
+        <div class="user-info" id="userInfo" style="display: none;">
+          <h4>👤 Welcome back!</h4>
+          <div class="user-avatar">
+            <img id="welcomeAvatar" src="assets/sprites/player.png" alt="User Avatar">
+          </div>
+          <p id="welcomeMessage">Ready to battle dinosaurs?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Splash/Loading screen -->
+  <div id="loadingScreen">
+    <h1>🦖 Loading DinoWarfare...</h1>
+  </div>
+
+  <!-- Canvas with Control Buttons -->
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Game Controls Bar: Only Pause, Stop, Resume, Shop (centered) -->
+    <div id="overlayControls">
+      <button id="pauseBtn" class="control-btn">⏸ Pause</button>
+      <button id="stopBtn" class="control-btn">⛔ Stop</button>
+      <button id="resumeBtn" class="control-btn">▶️ Resume</button>
+      <button id="shopBtn" class="control-btn">🛒 Shop</button>
+    </div>
+    
+
+  <script type="module" src="game.js"></script>
+  <script type="module" src="stripe-config.js"></script>
+  <script>
+    // Authentication and user management
+    let currentUser = null;
+    let playerAvatar = null;
+    let playerName = '';
+
+    // DOM elements
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const profileForm = document.getElementById('profileForm');
+    const subscriptionModal = document.getElementById('subscriptionModal');
+    
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const registerName = document.getElementById('registerName');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const profileName = document.getElementById('profileName');
+    
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    const showLoginBtn = document.getElementById('showLoginBtn');
+    
+    const avatarInput = document.getElementById('avatarInput');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarImage = document.getElementById('avatarImage');
+    
+    // Registration avatar elements
+    const registerAvatarInput = document.getElementById('registerAvatarInput');
+    const registerAvatarPreview = document.getElementById('registerAvatarPreview');
+    const registerAvatarImage = document.getElementById('registerAvatarImage');
+
+    // Simple user database (in localStorage for demo)
+    const USERS_KEY = 'dinoWarfareUsers';
+    const SUBSCRIPTIONS_KEY = 'dinoWarfareSubscriptions';
+
+    function getUsers() {
+      return JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    function getSubscriptions() {
+      return JSON.parse(localStorage.getItem(SUBSCRIPTIONS_KEY) || '{}');
+    }
+
+    function saveSubscriptions(subscriptions) {
+      localStorage.setItem(SUBSCRIPTIONS_KEY, JSON.stringify(subscriptions));
+    }
+
+    // Form switching
+    showRegisterBtn.addEventListener('click', () => {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+    });
+
+    showLoginBtn.addEventListener('click', () => {
+      registerForm.style.display = 'none';
+      loginForm.style.display = 'block';
+    });
+
+    // Registration
+    registerBtn.addEventListener('click', () => {
+      const name = registerName.value.trim();
+      const email = registerEmail.value.trim();
+      const password = registerPassword.value;
+      const confirm = confirmPassword.value;
+      const avatar = window.registerAvatarData || null; // Get uploaded avatar data
+
+      if (!name || !email || !password) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      if (password.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+      }
+
+      if (password !== confirm) {
+        alert('Passwords do not match');
+        return;
+      }
+
+      const users = getUsers();
+      if (users[email]) {
+        alert('Email already registered');
+        return;
+      }
+
+      // Create new user with avatar
+      users[email] = {
+        name: name,
+        email: email,
+        password: password, // In production, this should be hashed
+        avatar: avatar,
+        displayName: name,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        subscription: false,
+        subscriptionDate: null,
+        maxLevel: 1
+      };
+
+      saveUsers(users);
+      alert('Account created successfully! You can now sign in.');
+      
+      // Switch to login form
+      registerForm.style.display = 'none';
+      loginForm.style.display = 'block';
+      
+      // Clear form
+      registerName.value = '';
+      registerEmail.value = '';
+      registerPassword.value = '';
+      confirmPassword.value = '';
+      registerAvatarImage.src = 'assets/sprites/player.png';
+      window.registerAvatarData = null;
+    });
+
+    // Login
+    loginBtn.addEventListener('click', () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        alert('Please enter email and password');
+        return;
+      }
+
+      const users = getUsers();
+      const user = users[email];
+
+      if (!user || user.password !== password) {
+        alert('Invalid email or password');
+        return;
+      }
+
+      // Update last login
+      user.lastLogin = new Date().toISOString();
+      saveUsers(users);
+
+      currentUser = user;
+      
+      // Show user info
+      showUserInfo(user);
+      
+      // Check if user has completed profile
+      if (!user.avatar || !user.displayName) {
+        showProfileSetup();
+      } else {
+        startGame();
+      }
+    });
+
+    // Profile setup
+    function showProfileSetup() {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'none';
+      profileForm.style.display = 'block';
+      
+      if (currentUser.avatar) {
+        avatarImage.src = currentUser.avatar;
+        playerAvatar = currentUser.avatar;
+      }
+      if (currentUser.displayName) {
+        profileName.value = currentUser.displayName;
+      }
+    }
+
+    // Avatar upload for profile setup
+    avatarPreview.addEventListener('click', () => {
+      avatarInput.click();
+    });
+
+    avatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          avatarImage.src = e.target.result;
+          playerAvatar = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Avatar upload for registration
+    registerAvatarPreview.addEventListener('click', () => {
+      registerAvatarInput.click();
+    });
+
+    registerAvatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          registerAvatarImage.src = e.target.result;
+          window.registerAvatarData = e.target.result; // Store for registration
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Save profile
+    saveProfileBtn.addEventListener('click', () => {
+      const displayName = profileName.value.trim();
+      
+      if (!displayName) {
+        alert('Please enter a display name');
+        return;
+      }
+
+      // Update user profile
+      const users = getUsers();
+      users[currentUser.email].avatar = playerAvatar;
+      users[currentUser.email].displayName = displayName;
+      saveUsers(users);
+
+      currentUser = users[currentUser.email];
+      showUserInfo(currentUser);
+      startGame();
+    });
+
+    // Start game
+    function startGame() {
+      console.log('startGame called with user:', currentUser);
+      
+      playerName = currentUser.displayName;
+      playerAvatar = currentUser.avatar;
+      
+      document.getElementById('signInScreen').style.display = 'none';
+      document.getElementById('loadingScreen').style.display = 'flex';
+      
+      // Store current user data for game
+      const userData = {
+        name: playerName,
+        avatar: playerAvatar,
+        email: currentUser.email,
+        subscription: currentUser.subscription,
+        maxLevel: currentUser.maxLevel
+      };
+      
+      localStorage.setItem('dinoWarfareCurrentUser', JSON.stringify(userData));
+      console.log('User data stored:', userData);
+      
+      setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+        console.log('Loading screen hidden, starting game...');
+        // Start the actual game
+        if (window.startGameFromAuth) {
+          window.startGameFromAuth();
+        } else {
+          console.error('startGameFromAuth function not found!');
+        }
+      }, 1500);
+    }
+
+    // Subscription handling
+    // Note: subscribeBtn doesn't exist in HTML, only demoSubscribeBtn is used
+    // subscribeBtn.addEventListener('click', () => {
+    //   // This code is commented out since subscribeBtn doesn't exist
+    // });
+
+    // Demo subscription button (for testing)
+    document.getElementById('demoSubscribeBtn').addEventListener('click', () => {
+      // Simulate payment processing
+      alert('Demo payment processing... (This is a demo - payment would be processed here)');
+      
+      // Update user subscription
+      const users = getUsers();
+      users[currentUser.email].subscription = true;
+      users[currentUser.email].subscriptionDate = new Date().toISOString();
+      saveUsers(users);
+
+      // Update subscriptions
+      const subscriptions = getSubscriptions();
+      subscriptions[currentUser.email] = {
+        email: currentUser.email,
+        subscribed: true,
+        date: new Date().toISOString(),
+        amount: 2.50
+      };
+      saveSubscriptions(subscriptions);
+
+      currentUser = users[currentUser.email];
+      
+      // Close modal and continue game
+      subscriptionModal.style.display = 'none';
+      alert('Thank you for subscribing! You now have unlimited access to DinoWarfare with all premium features!');
+      
+      // Refresh the game to apply premium features
+      if (window.startGameFromAuth) {
+        window.startGameFromAuth();
+      }
+    });
+
+    // Real payment button (Stripe)
+    document.getElementById('realPaymentBtn').addEventListener('click', () => {
+      const paymentForm = document.getElementById('stripe-payment-form');
+      const demoButton = document.getElementById('demoSubscribeBtn');
+      
+      if (paymentForm.style.display === 'none') {
+        paymentForm.style.display = 'block';
+        demoButton.style.display = 'none';
+        document.getElementById('realPaymentBtn').textContent = '💳 Use Demo Payment';
+      } else {
+        paymentForm.style.display = 'none';
+        demoButton.style.display = 'block';
+        document.getElementById('realPaymentBtn').textContent = '💳 Real Payment (Stripe)';
+      }
+    });
+
+    // Modal close
+    document.querySelector('.close').addEventListener('click', () => {
+      subscriptionModal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target === subscriptionModal) {
+        subscriptionModal.style.display = 'none';
+      }
+    });
+
+    // Check subscription status (called from game.js)
+    window.checkSubscriptionStatus = function(level) {
+      if (!currentUser) return false;
+      
+      // Free trial: levels 1-3
+      if (level <= 3) return true;
+      
+      // Check if user has subscription
+      if (currentUser.subscription) return true;
+      
+      // Show subscription modal
+      subscriptionModal.style.display = 'block';
+      return false;
+    };
+
+    // Load existing user if available
+    window.addEventListener('load', () => {
+      const savedUser = localStorage.getItem('dinoWarfareCurrentUser');
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          const users = getUsers();
+          const user = users[userData.email];
+          
+          if (user) {
+            currentUser = user;
+            console.log('Auto-login successful for:', user.email);
+            
+            // Show user info if logged in
+            showUserInfo(user);
+            
+            // Check if user has completed profile setup
+            if (user.avatar && user.displayName) {
+              // Profile complete - auto-login
+              startGame();
+            } else {
+              // Profile incomplete - show profile setup
+              showProfileSetup();
+            }
+          } else {
+            console.log('Saved user not found in database, clearing saved data');
+            localStorage.removeItem('dinoWarfareCurrentUser');
+          }
+        } catch (error) {
+          console.error('Error loading saved user:', error);
+          localStorage.removeItem('dinoWarfareCurrentUser');
+        }
+      }
+    });
+
+    // Show user info in the interface
+    function showUserInfo(user) {
+      const userInfo = document.getElementById('userInfo');
+      const welcomeAvatar = document.getElementById('welcomeAvatar');
+      const welcomeMessage = document.getElementById('welcomeMessage');
+      
+      if (userInfo && user) {
+        userInfo.style.display = 'block';
+        
+        if (user.avatar) {
+          welcomeAvatar.src = user.avatar;
+        }
+        
+        welcomeMessage.textContent = `Welcome back, ${user.displayName || user.name}!`;
+      }
+    }
+
+    // Logout functionality
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to logout?')) {
+        // Clear current user data
+        localStorage.removeItem('dinoWarfareCurrentUser');
+        currentUser = null;
+        playerAvatar = null;
+        playerName = '';
+        
+        // Reset game state
+        if (window.gameStarted) {
+          window.gameStarted = false;
+          window.gameOver = false;
+          window.gamePaused = false;
+        }
+        
+        // Show sign-in screen
+        document.getElementById('signInScreen').style.display = 'flex';
+        document.getElementById('loadingScreen').style.display = 'none';
+        
+        // Clear forms
+        loginEmail.value = '';
+        loginPassword.value = '';
+        registerName.value = '';
+        registerEmail.value = '';
+        registerPassword.value = '';
+        confirmPassword.value = '';
+        profileName.value = '';
+        
+        alert('Logged out successfully!');
+      }
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('✅ Service Worker Registered:', reg.scope))
+        .catch(err => console.warn('Service Worker Failed', err));
+    }
+  </script>
+</body>
+</html>
+
+
