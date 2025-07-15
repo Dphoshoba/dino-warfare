@@ -1844,11 +1844,32 @@ function initializeSound() {
 window.addEventListener('load', () => {
   initializeCanvas();
   initializeSound();
-  
+
   // Ensure canvas has black background
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
+  // Auto-start the game for debugging
+  if (!gameStarted) {
+    window.startGameFromAuth();
+  }
+
+  // Debug overlay
+  setInterval(() => {
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = '#222';
+    ctx.fillRect(10, 10, 260, 90);
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px monospace';
+    ctx.fillText(`gameStarted: ${gameStarted}`, 20, 30);
+    ctx.fillText(`gamePaused: ${gamePaused}`, 20, 50);
+    ctx.fillText(`gameOver: ${gameOver}`, 20, 70);
+    ctx.fillText(`shopOpen: ${shopOpen}`, 20, 90);
+    ctx.restore();
+  }, 500);
+
   console.log('DinoWarfare initialized successfully');
   console.log('Canvas size:', canvas.width, 'x', canvas.height);
   console.log('Sound files loaded:', {
