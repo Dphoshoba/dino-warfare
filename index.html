@@ -7,6 +7,15 @@
   <title>DinoWarfare</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
+  <style>
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
 </head>
 <body>
   <!-- Sign-in Screen -->
@@ -62,7 +71,8 @@
               <p>Click to upload avatar</p>
             </div>
           </div>
-          <input type="file" id="registerAvatarInput" accept="image/*" style="display: none;">
+          <input type="file" id="registerAvatarInput" accept="image/*" style="display: none;" title="Upload avatar image">
+          <label for="registerAvatarInput" class="visually-hidden">Upload avatar image</label>
           <p class="avatar-hint">Upload a profile picture (optional)</p>
         </div>
         
@@ -83,7 +93,8 @@
               <p>Click to upload avatar</p>
             </div>
           </div>
-          <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+          <input type="file" id="avatarInput" accept="image/*" style="display: none;" title="Change profile picture">
+          <label for="avatarInput" class="visually-hidden">Change profile picture</label>
         </div>
         <div class="input-group">
           <input type="text" id="profileName" placeholder="Display Name" maxlength="20">
