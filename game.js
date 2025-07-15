@@ -448,8 +448,8 @@ window.startGameFromAuth = function() {
   level = 1;
   levelTransition = false;
   levelTransitionTimer = 0;
-  lastEnemySpawn = 0;
-  lastPowerupSpawn = 0;
+  lastEnemySpawn = Date.now() - 10000; // Force immediate enemy spawn
+  lastPowerupSpawn = Date.now();
   
   // Reset game objects
   bullets = [];
@@ -482,7 +482,7 @@ window.startGameFromAuth = function() {
   window.levelMessages = [];
   
   // Reset wave tracking variables
-  window.lastWaveTime = Date.now();
+  window.lastWaveTime = Date.now() - 25000; // First wave increments after 5s
   window.lastLevelWave = 0;
   window.lastRapidFireWave = 0;
   window.lastBossRushWave = 0;
