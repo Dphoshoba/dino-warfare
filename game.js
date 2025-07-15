@@ -308,46 +308,58 @@ canvas.addEventListener("click", (e) => {
 });
 
 // Fixed pause button functionality
-document.getElementById("pauseBtn").onclick = () => {
-  if (gameStarted && !gameOver) {
-    gamePaused = !gamePaused;
-    if (gamePaused) {
-      bgMusic.pause();
-    } else {
+const pauseBtn = document.getElementById("pauseBtn");
+if (pauseBtn) {
+  pauseBtn.onclick = () => {
+    if (gameStarted && !gameOver) {
+      gamePaused = !gamePaused;
+      if (gamePaused) {
+        bgMusic.pause();
+      } else {
+        bgMusic.play().catch(() => {});
+      }
+    }
+  };
+}
+
+const resumeBtn = document.getElementById("resumeBtn");
+if (resumeBtn) {
+  resumeBtn.onclick = () => {
+    if (!gameOver && gameStarted) {
+      gamePaused = false;
+      shopOpen = false;
       bgMusic.play().catch(() => {});
     }
-  }
-};
+  };
+}
 
-document.getElementById("resumeBtn").onclick = () => {
-  if (!gameOver && gameStarted) {
-    gamePaused = false;
-    shopOpen = false;
-    bgMusic.play().catch(() => {});
-  }
-};
-
-document.getElementById("stopBtn").onclick = () => {
-  if (gameStarted) {
-    gamePaused = true;
-    shopOpen = false;
-    bgMusic.pause();
-  }
-};
+const stopBtn = document.getElementById("stopBtn");
+if (stopBtn) {
+  stopBtn.onclick = () => {
+    if (gameStarted) {
+      gamePaused = true;
+      shopOpen = false;
+      bgMusic.pause();
+    }
+  };
+}
 
 // Shop button functionality
-document.getElementById("shopBtn").onclick = () => {
-  if (gameStarted && !gameOver) {
-    shopOpen = !shopOpen;
-    if (shopOpen) {
-      gamePaused = true;
-      bgMusic.pause();
-    } else {
-      gamePaused = false;
-      bgMusic.play().catch(() => {});
+const shopBtn = document.getElementById("shopBtn");
+if (shopBtn) {
+  shopBtn.onclick = () => {
+    if (gameStarted && !gameOver) {
+      shopOpen = !shopOpen;
+      if (shopOpen) {
+        gamePaused = true;
+        bgMusic.pause();
+      } else {
+        gamePaused = false;
+        bgMusic.play().catch(() => {});
+      }
     }
-  }
-};
+  };
+}
 
 // Premium features for level 3+
 const PREMIUM_FEATURES = {
@@ -1729,6 +1741,9 @@ Challenge accepted? 💪
   
   // Create share options dialog
   const shareDialog = document.createElement('div');
+  shareDialog.setAttribute('role', 'dialog');
+  shareDialog.setAttribute('aria-modal', 'true');
+  shareDialog.setAttribute('aria-label', 'Share your score');
   shareDialog.style.cssText = `
     position: fixed;
     top: 0;
@@ -1758,32 +1773,32 @@ Challenge accepted? 💪
     <p style="color: #666; margin-bottom: 25px;">Choose how you want to share your amazing score:</p>
     
     <div style="display: grid; gap: 10px; margin-bottom: 20px;">
-      <button onclick="window.open('${shareUrls.twitter}', '_blank')" style="background: #1DA1F2; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+      <button aria-label="Share on Twitter" onclick="window.open('${shareUrls.twitter}', '_blank')" style="background: #1DA1F2; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
         🐦 Share on Twitter
       </button>
       
-      <button onclick="window.open('${shareUrls.facebook}', '_blank')" style="background: #4267B2; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+      <button aria-label="Share on Facebook" onclick="window.open('${shareUrls.facebook}', '_blank')" style="background: #4267B2; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
         📘 Share on Facebook
       </button>
       
-      <button onclick="window.open('${shareUrls.whatsapp}', '_blank')" style="background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+      <button aria-label="Share on WhatsApp" onclick="window.open('${shareUrls.whatsapp}', '_blank')" style="background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
         💬 Share on WhatsApp
       </button>
       
-      <button onclick="window.open('${shareUrls.telegram}', '_blank')" style="background: #0088cc; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+      <button aria-label="Share on Telegram" onclick="window.open('${shareUrls.telegram}', '_blank')" style="background: #0088cc; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
         📱 Share on Telegram
       </button>
       
-      <button onclick="window.open('${shareUrls.email}', '_blank')" style="background: #EA4335; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+      <button aria-label="Share via Email" onclick="window.open('${shareUrls.email}', '_blank')" style="background: #EA4335; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
         📧 Share via Email
       </button>
     </div>
     
-    <button onclick="copyToClipboard('${shareText}')" style="background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-right: 10px;">
+    <button aria-label="Copy score to clipboard" onclick="copyToClipboard('${shareText}')" style="background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-right: 10px;">
       📋 Copy to Clipboard
     </button>
     
-    <button onclick="this.parentElement.parentElement.remove()" style="background: #666; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+    <button aria-label="Close share dialog" onclick="this.parentElement.parentElement.remove()" style="background: #666; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px;">
       ❌ Close
     </button>
   `;
