@@ -15,8 +15,13 @@ function resizeCanvas() {
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
     
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Use actual visible area instead of window.innerWidth
+    const rect = canvas.getBoundingClientRect();
+    const actualWidth = rect.width || window.innerWidth;
+    const actualHeight = rect.height || window.innerHeight;
+    
+    canvas.width = Math.min(actualWidth, window.innerWidth);
+    canvas.height = Math.min(actualHeight, window.innerHeight);
     
     // Use the smaller of viewport height or available height
     const availableHeight = window.innerHeight || document.documentElement.clientHeight;
@@ -592,7 +597,15 @@ const canvasButtons = [
 function drawCanvasButtons() {
   const btnW = 65, btnH = 20, gap = 5; // Made buttons slightly larger
   const totalW = canvasButtons.length * btnW + (canvasButtons.length - 1) * gap;
-  let x = canvas.width - totalW - 18;
+  
+  // Ensure buttons stay within screen bounds with better positioning
+  let x = canvas.width - totalW - 10; // Start from right edge
+  if (x < 10) {
+    // If buttons are too wide, stack them vertically or reduce size
+    x = 10;
+    console.warn('Buttons too wide for screen, adjusting position');
+  }
+  
   const y = 95; // Fixed position - moved down to stay below UI elements
   
   // Force redraw if requested
@@ -603,6 +616,12 @@ function drawCanvasButtons() {
   
   // Ensure buttons are always drawn and positioned correctly
   canvasButtons.forEach((btn, i) => {
+    // Double-check bounds before drawing
+    if (x < 0 || x + btnW > canvas.width) {
+      console.warn(`Button ${btn.key} out of bounds: x=${x}, canvas.width=${canvas.width}`);
+      return; // Skip this button if it would be out of bounds
+    }
+    
     ctx.save();
     ctx.globalAlpha = 0.92;
     ctx.fillStyle = '#222';
