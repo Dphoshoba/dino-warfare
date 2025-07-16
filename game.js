@@ -285,87 +285,72 @@ let joystickY = 0;
 let joystickBaseX = 0;
 let joystickBaseY = 0;
 let joystickRadius = 0;
+let playerTouchActive = false;
+let playerTouchX = 0;
+let playerTouchY = 0;
 
-// Initialize joystick
-function initJoystick() {
+// Initialize direct player touch control
+function initPlayerTouchControl() {
   if (!isMobile) {
-    console.log('Not mobile device, skipping joystick initialization');
+    console.log('Not mobile device, skipping player touch control initialization');
     return;
   }
   
-  console.log('Initializing joystick for mobile...');
+  console.log('Initializing direct player touch control for mobile...');
   
-  const joystickContainer = document.getElementById('joystickContainer');
-  const joystickBase = document.getElementById('joystickBase');
-  const joystickHandle = document.getElementById('joystickHandle');
+  // Set up canvas touch events for direct player control
+  canvas.addEventListener('touchstart', handlePlayerTouch, { passive: false });
+  canvas.addEventListener('touchmove', handlePlayerTouch, { passive: false });
+  canvas.addEventListener('touchend', handlePlayerTouchEnd, { passive: false });
   
-  console.log('Joystick elements found:', {
-    container: !!joystickContainer,
-    base: !!joystickBase,
-    handle: !!joystickHandle
-  });
-  
-  if (!joystickContainer || !joystickBase || !joystickHandle) {
-    console.error('Joystick elements not found, cannot initialize');
-    return;
-  }
-  
-  const rect = joystickBase.getBoundingClientRect();
-  joystickBaseX = rect.left + rect.width / 2;
-  joystickBaseY = rect.top + rect.height / 2;
-  joystickRadius = rect.width / 2 - 15; // Leave some margin
-  
-  console.log('Joystick initialized:', { baseX: joystickBaseX, baseY: joystickBaseY, radius: joystickRadius });
+  console.log('Direct player touch control initialized');
 }
 
-// Joystick touch events
-function handleJoystickTouch(e) {
-  if (!isMobile) return;
+// Direct player touch control
+function handlePlayerTouch(e) {
+  if (!isMobile || !gameStarted || gameOver) return;
   
-  const touch = e.touches[0] || e.changedTouches[0];
-  const touchX = touch.clientX;
-  const touchY = touch.clientY;
+  e.preventDefault();
   
-  const dx = touchX - joystickBaseX;
-  const dy = touchY - joystickBaseY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
   
-  if (distance <= joystickRadius) {
-    joystickX = dx / joystickRadius;
-    joystickY = dy / joystickRadius;
-  } else {
-    joystickX = dx / distance;
-    joystickY = dy / distance;
-  }
+  const touchX = (touch.clientX - rect.left) * scaleX;
+  const touchY = (touch.clientY - rect.top) * scaleY;
   
-  // Update joystick handle position
-  const joystickHandle = document.getElementById('joystickHandle');
-  if (joystickHandle) {
-    const moveX = joystickX * joystickRadius;
-    const moveY = joystickY * joystickRadius;
-    joystickHandle.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
-  }
-  
-  joystickActive = true;
-  
-  // Debug: Log joystick movement occasionally
-  if (Math.random() < 0.1) { // 10% chance each touch
-    console.log('Joystick moved:', { x: joystickX, y: joystickY, active: joystickActive });
+  // Check if touch is in the right half of the screen (player control area)
+  if (touchX > canvas.width / 2) {
+    playerTouchActive = true;
+    playerTouchX = touchX;
+    playerTouchY = touchY;
+    
+    // Move player towards touch position
+    const dx = touchX - player.x;
+    const dy = touchY - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 5) { // Only move if touch is not too close to player
+      joystickX = dx / distance;
+      joystickY = dy / distance;
+      joystickActive = true;
+    }
+    
+    // Debug: Log player touch occasionally
+    if (Math.random() < 0.05) { // 5% chance each touch
+      console.log('Player touch:', { x: touchX, y: touchY, playerX: player.x, playerY: player.y });
+    }
   }
 }
 
-function handleJoystickRelease() {
+function handlePlayerTouchEnd(e) {
   if (!isMobile) return;
   
+  playerTouchActive = false;
   joystickActive = false;
   joystickX = 0;
   joystickY = 0;
-  
-  // Reset joystick handle
-  const joystickHandle = document.getElementById('joystickHandle');
-  if (joystickHandle) {
-    joystickHandle.style.transform = 'translate(-50%, -50%)';
-  }
 }
 
 // Mobile button events
@@ -475,6 +460,7 @@ function initMobileButtons() {
   if (mobileShareBtn) {
     mobileShareBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      console.log('Mobile share button touched!');
       shareScore();
       mobileMenu.classList.remove('active');
     });
@@ -508,16 +494,7 @@ function initMobileButtons() {
   }
 }
 
-// Joystick event listeners
-if (isMobile) {
-  const joystickContainer = document.getElementById('joystickContainer');
-  if (joystickContainer) {
-    joystickContainer.addEventListener('touchstart', handleJoystickTouch);
-    joystickContainer.addEventListener('touchmove', handleJoystickTouch);
-    joystickContainer.addEventListener('touchend', handleJoystickRelease);
-    joystickContainer.addEventListener('touchcancel', handleJoystickRelease);
-  }
-}
+// Mobile touch event listeners are now handled in initPlayerTouchControl()
 
 // Global click handler to ensure buttons are always accessible
 window.addEventListener('click', (e) => {
@@ -2546,20 +2523,20 @@ window.addEventListener('load', () => {
     console.log('Setting up mobile controls...');
     
     // Try to initialize immediately
-    initJoystick();
+    initPlayerTouchControl();
     initMobileButtons();
     
     // Also try again after a short delay in case elements weren't ready
     setTimeout(() => {
       console.log('Retrying mobile control initialization...');
-      initJoystick();
+      initPlayerTouchControl();
       initMobileButtons();
     }, 500);
     
     // And one more time after a longer delay
     setTimeout(() => {
       console.log('Final mobile control initialization attempt...');
-      initJoystick();
+      initPlayerTouchControl();
       initMobileButtons();
     }, 1000);
     
