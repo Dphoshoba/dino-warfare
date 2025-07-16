@@ -11,9 +11,16 @@ const gameContainer = document.getElementById("gameContainer");
 // Set canvas size based on device
 function resizeCanvas() {
   if (isMobile) {
-    // Mobile: full screen
+    // Mobile: full screen with viewport fixes
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    
+    // Use the smaller of viewport height or available height
+    const availableHeight = window.innerHeight || document.documentElement.clientHeight;
+    canvas.height = Math.min(canvas.height, availableHeight);
   } else {
     // Desktop: fixed size with max constraints
     canvas.width = Math.min(960, window.innerWidth - 40);

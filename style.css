@@ -22,6 +22,12 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
+  /* Mobile viewport fixes */
+  height: 100vh;
+  height: -webkit-fill-available;
+  height: fill-available;
+  min-height: -webkit-fill-available;
+  min-height: fill-available;
 }
 
 /* Game Container */
@@ -29,6 +35,10 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: -webkit-fill-available;
+  height: fill-available;
+  min-height: -webkit-fill-available;
+  min-height: fill-available;
   background: #000;
   overflow: hidden;
 }
@@ -38,6 +48,10 @@ html, body {
   display: block;
   width: 100%;
   height: 100%;
+  height: -webkit-fill-available;
+  height: fill-available;
+  min-height: -webkit-fill-available;
+  min-height: fill-available;
   background: #000;
   outline: none;
   touch-action: none;
@@ -52,6 +66,9 @@ html, body {
   height: 120px;
   pointer-events: none;
   z-index: 100;
+  /* Ensure controls stay above browser UI */
+  bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 /* Joystick */
@@ -462,5 +479,47 @@ html, body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile browser specific fixes */
+@media screen and (max-width: 768px) {
+  :root {
+    --vh: 1vh;
+  }
+  
+  html, body {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    height: -webkit-fill-available;
+    height: fill-available;
+    min-height: -webkit-fill-available;
+    min-height: fill-available;
+    overflow: hidden;
+    position: fixed;
+  }
+  
+  #gameContainer {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    height: -webkit-fill-available;
+    height: fill-available;
+    min-height: -webkit-fill-available;
+    min-height: fill-available;
+  }
+  
+  #gameCanvas {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    height: -webkit-fill-available;
+    height: fill-available;
+    min-height: -webkit-fill-available;
+    min-height: fill-available;
+  }
+  
+  /* Hide browser UI when possible */
+  .mobile-controls {
+    bottom: env(safe-area-inset-bottom, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
