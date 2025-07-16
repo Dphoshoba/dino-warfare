@@ -317,11 +317,9 @@ function handlePlayerTouch(e) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
   const touchX = (touch.clientX - rect.left) * scaleX;
-  // Only respond to touches on the right half
-  if (touchX > canvas.width / 2) {
-    playerTouchActive = true;
-    playerTargetX = Math.max(50, Math.min(canvas.width - 50, touchX));
-  }
+  // Allow movement anywhere horizontally
+  playerTouchActive = true;
+  playerTargetX = Math.max(50, Math.min(canvas.width - 50, touchX));
 }
 
 function handlePlayerTouchEnd(e) {
