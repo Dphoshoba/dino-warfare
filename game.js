@@ -586,7 +586,7 @@ function drawCanvasButtons() {
   const btnW = 65, btnH = 20, gap = 5; // Made buttons slightly larger
   const totalW = canvasButtons.length * btnW + (canvasButtons.length - 1) * gap;
   let x = canvas.width - totalW - 18;
-  const y = 25; // Fixed position - moved down to stay in view
+  const y = 95; // Fixed position - moved down to stay below UI elements
   
   // Force redraw if requested
   if (window.forceButtonRedraw) {
@@ -688,7 +688,7 @@ canvas.addEventListener('click', (e) => {
   }
   
   // Fallback: If no button was clicked but we're in the button area, try keyboard shortcuts
-  if (!buttonClicked && y >= 20 && y <= 50 && x >= canvas.width - 300) {
+  if (!buttonClicked && y >= 90 && y <= 120 && x >= canvas.width - 300) {
     console.log('Fallback: Button area clicked but no button detected, trying keyboard shortcuts');
     // Try to trigger the most likely button based on X position
     const buttonWidth = 65;
@@ -1948,10 +1948,10 @@ function draw() {
     ctx.save();
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 3;
-    ctx.strokeRect(canvas.width - 280, 25, 260, 20);
+    ctx.strokeRect(canvas.width - 280, 95, 260, 20);
     ctx.fillStyle = "#00ff00";
     ctx.font = "10px Arial";
-    ctx.fillText("BUTTON AREA", canvas.width - 270, 20);
+    ctx.fillText("BUTTON AREA", canvas.width - 270, 90);
     ctx.restore();
     
     // Show button health status
@@ -1965,7 +1965,7 @@ function draw() {
     if (!buttonsHealthy) {
       ctx.fillStyle = "#ff0000";
       ctx.font = "bold 14px Arial";
-      ctx.fillText("⚠️ BUTTONS NOT RESPONDING", canvas.width - 280, 50);
+      ctx.fillText("⚠️ BUTTONS NOT RESPONDING", canvas.width - 280, 120);
     }
   }
   // Animate level/theme text when it changes
