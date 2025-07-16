@@ -1,7 +1,51 @@
-// Dino Warfare - game.js (ENHANCED VERSION)
+// Dino Warfare - game.js (MOBILE-ENHANCED VERSION)
+
+// Mobile detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+// Responsive canvas setup
 const canvas = document.getElementById("gameCanvas");
-canvas.width = 960;
-canvas.height = 600;
+const gameContainer = document.getElementById("gameContainer");
+
+// Set canvas size based on device
+function resizeCanvas() {
+  if (isMobile) {
+    // Mobile: full screen
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  } else {
+    // Desktop: fixed size with max constraints
+    canvas.width = Math.min(960, window.innerWidth - 40);
+    canvas.height = Math.min(600, window.innerHeight - 40);
+  }
+  
+  // Update game container size
+  gameContainer.style.width = canvas.width + 'px';
+  gameContainer.style.height = canvas.height + 'px';
+  
+  console.log('Canvas resized to:', canvas.width, 'x', canvas.height, 'Mobile:', isMobile);
+}
+
+// Initial resize
+resizeCanvas();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  if (isMobile) {
+    setTimeout(initJoystick, 100);
+  }
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    resizeCanvas();
+    if (isMobile) {
+      initJoystick();
+    }
+  }, 100);
+});
+
 const ctx = canvas.getContext("2d");
 
 // Player data from sign-in
@@ -18,6 +62,14 @@ function loadPlayerData() {
   const saved = localStorage.getItem('dinoWarfareCurrentUser');
   if (saved) {
     playerData = JSON.parse(saved);
+    // Admin mode: unlock all features for admin@dino.com
+    if (playerData.email && playerData.email.toLowerCase() === 'admin@dino.com') {
+      playerData.subscription = true;
+      playerData.isAdmin = true;
+      playerData.maxLevel = 999;
+    } else {
+      playerData.isAdmin = false;
+    }
   }
 }
 
@@ -141,6 +193,7 @@ let enemies = [];
 let bossEnemies = [];
 let fireballs = [];
 let powerUps = [];
+let particles = [];
 
 // Input handling
 let keys = {};
@@ -182,6 +235,15 @@ const POWER_UPS = [
   { type: 'shield', color: 'blue', points: 0 }
 ];
 
+// Premium power-up types
+const PREMIUM_POWER_UPS = [
+  { type: 'laser', color: 'red', points: 0 },
+  { type: 'shield_plus', color: 'cyan', points: 0 },
+  { type: 'time_slow', color: 'purple', points: 0 },
+  { type: 'nuke', color: 'orange', points: 0 },
+  { type: 'multi_shot', color: 'yellow', points: 0 }
+];
+
 // Enhanced power-up system with premium features
 let activePowerUps = [];
 
@@ -198,6 +260,229 @@ const SHOP_ITEMS = [
 // Event listeners
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
+
+// Mobile touch controls
+let joystickActive = false;
+let joystickX = 0;
+let joystickY = 0;
+let joystickBaseX = 0;
+let joystickBaseY = 0;
+let joystickRadius = 0;
+
+// Initialize joystick
+function initJoystick() {
+  if (!isMobile) return;
+  
+  const joystickContainer = document.getElementById('joystickContainer');
+  const joystickBase = document.getElementById('joystickBase');
+  const joystickHandle = document.getElementById('joystickHandle');
+  
+  if (!joystickContainer || !joystickBase || !joystickHandle) return;
+  
+  const rect = joystickBase.getBoundingClientRect();
+  joystickBaseX = rect.left + rect.width / 2;
+  joystickBaseY = rect.top + rect.height / 2;
+  joystickRadius = rect.width / 2 - 15; // Leave some margin
+  
+  console.log('Joystick initialized:', { baseX: joystickBaseX, baseY: joystickBaseY, radius: joystickRadius });
+}
+
+// Joystick touch events
+function handleJoystickTouch(e) {
+  if (!isMobile) return;
+  
+  const touch = e.touches[0] || e.changedTouches[0];
+  const touchX = touch.clientX;
+  const touchY = touch.clientY;
+  
+  const dx = touchX - joystickBaseX;
+  const dy = touchY - joystickBaseY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  
+  if (distance <= joystickRadius) {
+    joystickX = dx / joystickRadius;
+    joystickY = dy / joystickRadius;
+  } else {
+    joystickX = dx / distance;
+    joystickY = dy / distance;
+  }
+  
+  // Update joystick handle position
+  const joystickHandle = document.getElementById('joystickHandle');
+  if (joystickHandle) {
+    const moveX = joystickX * joystickRadius;
+    const moveY = joystickY * joystickRadius;
+    joystickHandle.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+  }
+  
+  joystickActive = true;
+}
+
+function handleJoystickRelease() {
+  if (!isMobile) return;
+  
+  joystickActive = false;
+  joystickX = 0;
+  joystickY = 0;
+  
+  // Reset joystick handle
+  const joystickHandle = document.getElementById('joystickHandle');
+  if (joystickHandle) {
+    joystickHandle.style.transform = 'translate(-50%, -50%)';
+  }
+}
+
+// Mobile button events
+function initMobileButtons() {
+  if (!isMobile) return;
+  
+  // Shoot button
+  const shootBtn = document.getElementById('shootBtn');
+  if (shootBtn) {
+    shootBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      keys[' '] = true; // Trigger shooting
+    });
+    shootBtn.addEventListener('touchend', () => {
+      keys[' '] = false;
+    });
+  }
+  
+  // Pause button
+  const pauseBtn = document.getElementById('pauseBtn');
+  if (pauseBtn) {
+    pauseBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameStarted && !gameOver) {
+        gamePaused = !gamePaused;
+        if (gamePaused) {
+          bgMusic.pause();
+        } else {
+          bgMusic.play().catch(() => {});
+        }
+      }
+    });
+  }
+  
+  // Shop button
+  const shopBtn = document.getElementById('shopBtn');
+  if (shopBtn) {
+    shopBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameStarted && !gameOver) {
+        shopOpen = !shopOpen;
+        if (shopOpen) {
+          gamePaused = true;
+          bgMusic.pause();
+        } else {
+          gamePaused = false;
+          bgMusic.play().catch(() => {});
+        }
+      }
+    });
+  }
+  
+  // Menu button
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      mobileMenu.classList.add('active');
+    });
+  }
+  
+  // Menu items
+  const mobileResumeBtn = document.getElementById('mobileResumeBtn');
+  const mobileShopBtn = document.getElementById('mobileShopBtn');
+  const mobileShareBtn = document.getElementById('mobileShareBtn');
+  const mobileDebugBtn = document.getElementById('mobileDebugBtn');
+  const mobileCloseMenuBtn = document.getElementById('mobileCloseMenuBtn');
+  
+  if (mobileResumeBtn) {
+    mobileResumeBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (!gameOver && gameStarted) {
+        gamePaused = false;
+        shopOpen = false;
+        bgMusic.play().catch(() => {});
+      }
+      mobileMenu.classList.remove('active');
+    });
+  }
+  
+  if (mobileShopBtn) {
+    mobileShopBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameStarted && !gameOver) {
+        shopOpen = !shopOpen;
+        if (shopOpen) {
+          gamePaused = true;
+          bgMusic.pause();
+        } else {
+          gamePaused = false;
+          bgMusic.play().catch(() => {});
+        }
+      }
+      mobileMenu.classList.remove('active');
+    });
+  }
+  
+  if (mobileShareBtn) {
+    mobileShareBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      shareScore();
+      mobileMenu.classList.remove('active');
+    });
+  }
+  
+  if (mobileDebugBtn) {
+    mobileDebugBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameStarted) {
+        window.debugMode = !window.debugMode;
+        console.log('Debug mode:', window.debugMode);
+      }
+      mobileMenu.classList.remove('active');
+    });
+  }
+  
+  if (mobileCloseMenuBtn) {
+    mobileCloseMenuBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      mobileMenu.classList.remove('active');
+    });
+  }
+  
+  // Close menu when clicking outside
+  if (mobileMenu) {
+    mobileMenu.addEventListener('touchstart', (e) => {
+      if (e.target === mobileMenu) {
+        mobileMenu.classList.remove('active');
+      }
+    });
+  }
+}
+
+// Joystick event listeners
+if (isMobile) {
+  const joystickContainer = document.getElementById('joystickContainer');
+  if (joystickContainer) {
+    joystickContainer.addEventListener('touchstart', handleJoystickTouch);
+    joystickContainer.addEventListener('touchmove', handleJoystickTouch);
+    joystickContainer.addEventListener('touchend', handleJoystickRelease);
+    joystickContainer.addEventListener('touchcancel', handleJoystickRelease);
+  }
+}
+
+// Global click handler to ensure buttons are always accessible
+window.addEventListener('click', (e) => {
+  // If clicking outside canvas, ensure buttons are reset
+  if (e.target !== canvas) {
+    // Force redraw of buttons on next frame
+    window.forceButtonRedraw = true;
+  }
+});
 
 // Add mouse move listener for shop debugging
 canvas.addEventListener("mousemove", (e) => {
@@ -234,9 +519,194 @@ canvas.addEventListener("mousemove", (e) => {
   }
 });
 
-canvas.addEventListener("click", (e) => {
+// --- CANVAS BUTTONS ---
+const canvasButtons = [
+  { key: 'pause', label: '⏸ Pause', action: () => {
+      console.log('Pause button action triggered');
+      if (gameStarted && !gameOver) {
+        gamePaused = !gamePaused;
+        if (gamePaused) { bgMusic.pause(); } else { bgMusic.play().catch(() => {}); }
+        console.log('Pause button clicked: gamePaused =', gamePaused, 'shopOpen =', shopOpen);
+        
+        // Visual feedback
+        showLevelMessage(gamePaused ? '⏸ Game Paused' : '▶️ Game Resumed');
+        
+        // Button click feedback
+        window.lastButtonClick = { key: 'pause', time: Date.now() };
+      }
+    }
+  },
+  { key: 'stop', label: '⛔ Stop', action: () => {
+      console.log('Stop button action triggered');
+      if (gameStarted) {
+        gamePaused = true;
+        shopOpen = false;
+        bgMusic.pause();
+        console.log('Stop button clicked: gamePaused =', gamePaused, 'shopOpen =', shopOpen);
+        
+        // Button click feedback
+        window.lastButtonClick = { key: 'stop', time: Date.now() };
+      }
+    }
+  },
+  { key: 'resume', label: '▶️ Resume', action: () => {
+      console.log('Resume button action triggered');
+      if (!gameOver && gameStarted) {
+        gamePaused = false;
+        shopOpen = false;
+        bgMusic.play().catch(() => {});
+        console.log('Resume button clicked: gamePaused =', gamePaused, 'shopOpen =', shopOpen);
+        
+        // Button click feedback
+        window.lastButtonClick = { key: 'resume', time: Date.now() };
+      }
+    }
+  },
+  { key: 'shop', label: '🛒 Shop', action: () => {
+      console.log('Shop button action triggered');
+      if (gameStarted && !gameOver) {
+        shopOpen = !shopOpen;
+        if (shopOpen) {
+          gamePaused = true;
+          bgMusic.pause();
+        } else {
+          gamePaused = false;
+          bgMusic.play().catch(() => {});
+        }
+        console.log('Shop button clicked: gamePaused =', gamePaused, 'shopOpen =', shopOpen);
+        
+        // Button click feedback
+        window.lastButtonClick = { key: 'shop', time: Date.now() };
+      }
+    }
+  }
+];
+
+function drawCanvasButtons() {
+  const btnW = 65, btnH = 20, gap = 5; // Made buttons slightly larger
+  const totalW = canvasButtons.length * btnW + (canvasButtons.length - 1) * gap;
+  let x = canvas.width - totalW - 18;
+  const y = 25; // Fixed position - moved down to stay in view
+  
+  // Force redraw if requested
+  if (window.forceButtonRedraw) {
+    console.log('Forcing button redraw due to health check');
+    window.forceButtonRedraw = false;
+  }
+  
+  // Ensure buttons are always drawn and positioned correctly
+  canvasButtons.forEach((btn, i) => {
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = '#222';
+    ctx.fillRect(x, y, btnW, btnH);
+    ctx.strokeStyle = '#4fc3f7';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, btnW, btnH);
+    ctx.font = '10px Arial';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(btn.label, x + btnW/2, y + btnH/2 + 1);
+    ctx.restore();
+    
+    // Always update button rectangle - this is critical for click detection
+    btn._rect = { x, y, w: btnW, h: btnH };
+    
+    // Debug: Show button areas when debug mode is on
+    if (window.debugMode) {
+      ctx.save();
+      ctx.strokeStyle = '#ff00ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, btnW, btnH);
+      ctx.fillStyle = '#ff00ff';
+      ctx.font = '8px Arial';
+      ctx.fillText(`${btn.key}`, x + 2, y + 8);
+      ctx.restore();
+    }
+    
+    x += btnW + gap;
+  });
+  
+  // Debug: Log button positions periodically
+  if (window.debugMode && Math.random() < 0.01) { // 1% chance each frame
+    console.log('Button positions updated:', canvasButtons.map(btn => ({ key: btn.key, rect: btn._rect })));
+  }
+  
+  // Force button redraw flag to ensure buttons are always responsive
+  window.buttonsDrawn = true;
+  
+  // Show button click feedback
+  if (window.lastButtonClick && Date.now() - window.lastButtonClick.time < 500) {
+    const btn = canvasButtons.find(b => b.key === window.lastButtonClick.key);
+    if (btn && btn._rect) {
+      ctx.save();
+      ctx.strokeStyle = '#ffff00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(btn._rect.x - 2, btn._rect.y - 2, btn._rect.w + 4, btn._rect.h + 4);
+      ctx.restore();
+    }
+  }
+}
+
+// We'll call drawCanvasButtons directly in the draw function instead
+
+// Handle mouse clicks for canvas buttons - COMPLETELY REWRITTEN
+canvas.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // Skip canvas button handling on mobile (use touch controls instead)
+  if (isMobile) {
+    // If game not started or game over, start game on click
+    if (!gameStarted || gameOver) {
+      startGameFromAuth();
+    }
+    return;
+  }
+  
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  
+  console.log('Canvas clicked at:', x, y, 'Canvas size:', canvas.width, 'x', canvas.height);
+  
+  // Check each button individually using their actual positions
+  let buttonClicked = false;
+  for (let i = 0; i < canvasButtons.length; i++) {
+    const btn = canvasButtons[i];
+    if (btn._rect && 
+        x >= btn._rect.x && x <= btn._rect.x + btn._rect.w &&
+        y >= btn._rect.y && y <= btn._rect.y + btn._rect.h) {
+      console.log('Button clicked:', btn.key, 'at position:', btn._rect);
+      btn.action();
+      buttonClicked = true;
+      return;
+    }
+  }
+  
+  // Fallback: If no button was clicked but we're in the button area, try keyboard shortcuts
+  if (!buttonClicked && y >= 20 && y <= 50 && x >= canvas.width - 300) {
+    console.log('Fallback: Button area clicked but no button detected, trying keyboard shortcuts');
+    // Try to trigger the most likely button based on X position
+    const buttonWidth = 65;
+    const gap = 5;
+    const totalButtonWidth = buttonWidth + gap;
+    const relativeX = x - (canvas.width - 280);
+    const buttonIndex = Math.floor(relativeX / totalButtonWidth);
+    
+    if (buttonIndex >= 0 && buttonIndex < canvasButtons.length) {
+      const btn = canvasButtons[buttonIndex];
+      console.log('Fallback: Activating button via index:', btn.key);
+      btn.action();
+      return;
+    }
+  }
+  // If game not started or game over, start game on click
   if (!gameStarted || gameOver) {
-    startGame();
+    startGameFromAuth();
     return;
   }
   
@@ -307,221 +777,17 @@ canvas.addEventListener("click", (e) => {
   }
 });
 
-// Fixed pause button functionality
-const pauseBtn = document.getElementById("pauseBtn");
-if (pauseBtn) {
-  pauseBtn.onclick = () => {
-    if (gameStarted && !gameOver) {
-      gamePaused = !gamePaused;
-      if (gamePaused) {
-        bgMusic.pause();
-      } else {
-        bgMusic.play().catch(() => {});
-      }
-    }
-  };
-}
-
-const resumeBtn = document.getElementById("resumeBtn");
-if (resumeBtn) {
-  resumeBtn.onclick = () => {
-    if (!gameOver && gameStarted) {
-      gamePaused = false;
-      shopOpen = false;
-      bgMusic.play().catch(() => {});
-    }
-  };
-}
-
-const stopBtn = document.getElementById("stopBtn");
-if (stopBtn) {
-  stopBtn.onclick = () => {
-    if (gameStarted) {
-      gamePaused = true;
-      shopOpen = false;
-      bgMusic.pause();
-    }
-  };
-}
-
-// Shop button functionality
-const shopBtn = document.getElementById("shopBtn");
-if (shopBtn) {
-  shopBtn.onclick = () => {
-    if (gameStarted && !gameOver) {
-      shopOpen = !shopOpen;
-      if (shopOpen) {
-        gamePaused = true;
-        bgMusic.pause();
-      } else {
-        gamePaused = false;
-        bgMusic.play().catch(() => {});
-      }
-    }
-  };
-}
-
-// Premium features for level 3+
-const PREMIUM_FEATURES = {
-  // Special power-ups available only to subscribers
-  PREMIUM_POWER_UPS: [
-    { type: 'laser', color: 'red', points: 0, duration: 10000, effect: 'continuous laser beam' },
-    { type: 'shield_plus', color: 'cyan', points: 0, duration: 15000, effect: 'invincible shield' },
-    { type: 'time_slow', color: 'purple', points: 0, duration: 8000, effect: 'slow motion enemies' },
-    { type: 'nuke', color: 'orange', points: 0, duration: 0, effect: 'destroy all enemies' },
-    { type: 'multi_shot', color: 'yellow', points: 0, duration: 12000, effect: '5-way bullet spread' }
-  ],
-  
-  // Enhanced boss abilities
-  BOSS_ABILITIES: [
-    'teleport', 'summon_minions', 'laser_beam', 'earthquake', 'meteor_shower'
-  ],
-  
-  // Particle effects
-  PARTICLE_SYSTEMS: {
-    explosion: { count: 20, speed: 3, life: 60, color: 'orange' },
-    laser: { count: 5, speed: 2, life: 30, color: 'red' },
-    shield: { count: 8, speed: 1, life: 90, color: 'cyan' },
-    powerup: { count: 15, speed: 2, life: 45, color: 'gold' }
-  }
-};
-
-// Particle system for premium effects
-let particles = [];
-
-function createParticles(x, y, type) {
-  if (!playerData.subscription && level <= 3) return; // Only for premium users
-  
-  const particleConfig = PREMIUM_FEATURES.PARTICLE_SYSTEMS[type];
-  if (!particleConfig) return;
-  
-  for (let i = 0; i < particleConfig.count; i++) {
-    particles.push({
-      x: x,
-      y: y,
-      vx: (Math.random() - 0.5) * particleConfig.speed,
-      vy: (Math.random() - 0.5) * particleConfig.speed,
-      life: particleConfig.life,
-      maxLife: particleConfig.life,
-      color: particleConfig.color,
-      size: Math.random() * 3 + 1
-    });
-  }
-}
-
-function updateParticles() {
-  particles.forEach((particle, index) => {
-    particle.x += particle.vx;
-    particle.y += particle.vy;
-    particle.life--;
+// Mobile touch handling for canvas
+if (isMobile) {
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    if (particle.life <= 0) {
-      particles.splice(index, 1);
+    // If game not started or game over, start game on touch
+    if (!gameStarted || gameOver) {
+      startGameFromAuth();
     }
-  });
-}
-
-function drawParticles() {
-  particles.forEach(particle => {
-    const alpha = particle.life / particle.maxLife;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = particle.color;
-    ctx.beginPath();
-    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  });
-}
-
-// Global function to test sharing (for debugging)
-window.testShare = function() {
-  console.log('Testing share functionality...');
-  shareScore();
-};
-
-// Global function to start game from HTML authentication
-window.startGameFromAuth = function() {
-  loadPlayerData();
-  
-  // Load player avatar if available
-  if (playerData.avatar) {
-    playerAvatarImg.src = playerData.avatar;
-  }
-  
-  gameStarted = true;
-  gamePaused = false;
-  gameOver = false;
-  shopOpen = false;
-  score = 0;
-  lives = 4;
-  coins = 0;
-  wave = 1;
-  level = 1;
-  levelTransition = false;
-  levelTransitionTimer = 0;
-  lastEnemySpawn = Date.now() - 10000; // Force immediate enemy spawn
-  lastPowerupSpawn = Date.now();
-  
-  // Reset game objects
-  bullets = [];
-  enemies = [];
-  bossEnemies = [];
-  fireballs = [];
-  powerUps = [];
-  particles = [];
-  
-  // Reset player
-  player.x = canvas.width / 2;
-  player.y = canvas.height - 100;
-  player.shield = false;
-  player.bulletCooldown = 0;
-  player.speed = 8;
-  player.bulletSpeed = 12;
-  player.maxBullets = 3;
-  player.bulletSize = 4;
-  player.diagonalShooting = false;
-  
-  // Premium player enhancements
-  if (playerData.subscription) {
-    player.speed += 2;
-    player.bulletSpeed += 3;
-    player.maxBullets += 1;
-  }
-  
-  // Reset messages
-  window.purchaseMessages = [];
-  window.levelMessages = [];
-  
-  // Reset wave tracking variables
-  window.lastWaveTime = Date.now() - 25000; // First wave increments after 5s
-  window.lastLevelWave = 0;
-  window.lastRapidFireWave = 0;
-  window.lastBossRushWave = 0;
-  
-  bgMusic.play().catch(() => {});
-  
-  console.log('Game started from authentication system');
-  console.log('Player data:', playerData);
-};
-
-// Sound test function
-window.testSounds = function() {
-  console.log('Testing sounds...');
-  
-  // Test each sound
-  shootSound.play().catch(e => console.warn('Shoot sound failed:', e));
-  setTimeout(() => hitSound.play().catch(e => console.warn('Hit sound failed:', e)), 500);
-  setTimeout(() => regenSound.play().catch(e => console.warn('Regen sound failed:', e)), 1000);
-  setTimeout(() => shieldSound.play().catch(e => console.warn('Shield sound failed:', e)), 1500);
-  
-  console.log('Sound test completed');
-};
-
-// Fallback: if no authentication, start with default settings
-if (!gameStarted) {
-  console.log('No authentication detected, starting with default settings');
-  loadPlayerData();
+  }, { passive: false });
 }
 
 function buyShopItem(item) {
@@ -577,8 +843,17 @@ function showPurchaseMessage(itemName) {
 }
 
 function enforcePlayerBounds() {
-  if (player.x < player.radius) player.x = player.radius;
-  if (player.x > canvas.width - player.radius) player.x = canvas.width - player.radius;
+  // Ensure player doesn't get stuck at boundaries
+  const minX = player.radius;
+  const maxX = canvas.width - player.radius;
+  
+  if (player.x < minX) player.x = minX;
+  if (player.x > maxX) player.x = maxX;
+  
+  // Debug: Log if player is at boundary
+  if (window.debugMode && (player.x === minX || player.x === maxX)) {
+    console.log('Player at boundary:', { x: player.x, minX, maxX });
+  }
 }
 
 function shoot() {
@@ -644,14 +919,51 @@ function shoot() {
       createParticles(player.x, player.y - 20, 'laser');
     }
     
+    // Add trail for each bullet
+    bullets.forEach((bullet, i) => {
+      bulletTrails.push({
+        x: bullet.x,
+        y: bullet.y,
+        life: 18,
+        color: BULLET_TRAIL_COLORS[i % BULLET_TRAIL_COLORS.length],
+        radius: bullet.radius + 3
+      });
+    });
+    
     player.bulletCooldown = 15; // Reduced cooldown for better gameplay
   }
 }
 
 function updatePlayer() {
-  if (keys['ArrowLeft']) player.x -= player.speed;
-  if (keys['ArrowRight']) player.x += player.speed;
-  if (keys[' ']) shoot(); // Spacebar to shoot
+  // Ensure player speed is always positive
+  if (player.speed <= 0) player.speed = 8;
+  
+  // Store previous position for stuck detection
+  const prevX = player.x;
+  
+  // Handle movement - keyboard or joystick
+  if (isMobile && joystickActive) {
+    // Mobile joystick movement
+    const moveSpeed = player.speed * Math.abs(joystickX);
+    if (joystickX < -0.1) {
+      player.x -= moveSpeed;
+    } else if (joystickX > 0.1) {
+      player.x += moveSpeed;
+    }
+  } else {
+    // Keyboard movement
+    if (keys['ArrowLeft']) player.x -= player.speed;
+    if (keys['ArrowRight']) player.x += player.speed;
+  }
+  
+  // Shooting
+  if (keys[' ']) shoot(); // Spacebar or mobile shoot button
+  
+  // Check if player got stuck (position didn't change when keys were pressed)
+  if ((keys['ArrowLeft'] || keys['ArrowRight']) && player.x === prevX) {
+    console.log('Player movement stuck detected, resetting position');
+    player.x = canvas.width / 2; // Reset to center
+  }
   
   // Keyboard shortcuts
   if (keys['p'] || keys['P']) {
@@ -682,7 +994,35 @@ function updatePlayer() {
   if (keys['d'] || keys['D']) {
     if (gameStarted) {
       window.debugMode = !window.debugMode;
+      console.log('Debug mode:', window.debugMode);
     }
+  }
+  
+  // Test button actions with keyboard shortcuts
+  if (keys['1']) {
+    console.log('Testing pause button via keyboard');
+    canvasButtons.find(btn => btn.key === 'pause')?.action();
+  }
+  if (keys['2']) {
+    console.log('Testing stop button via keyboard');
+    canvasButtons.find(btn => btn.key === 'stop')?.action();
+  }
+  if (keys['3']) {
+    console.log('Testing resume button via keyboard');
+    canvasButtons.find(btn => btn.key === 'resume')?.action();
+  }
+  if (keys['4']) {
+    console.log('Testing shop button via keyboard');
+    canvasButtons.find(btn => btn.key === 'shop')?.action();
+  }
+  
+  // Emergency button test - press 'T' to test all buttons
+  if (keys['t'] || keys['T']) {
+    console.log('Testing all buttons via keyboard');
+    canvasButtons.forEach((btn, index) => {
+      console.log(`Testing button ${index}: ${btn.key}`);
+      setTimeout(() => btn.action(), index * 500);
+    });
   }
   
   enforcePlayerBounds();
@@ -708,6 +1048,19 @@ function updateBullets() {
     if (bullet.y < -10 || bullet.x < -10 || bullet.x > canvas.width + 10) {
       bullets.splice(index, 1);
     }
+    // Add vibrant trail as bullet moves
+    bulletTrails.push({
+      x: bullet.x,
+      y: bullet.y,
+      life: 18,
+      color: BULLET_TRAIL_COLORS[(index + Math.floor(Math.random()*3)) % BULLET_TRAIL_COLORS.length],
+      radius: bullet.radius + 3
+    });
+  });
+  // Update and fade bullet trails
+  bulletTrails.forEach((trail, i) => {
+    trail.life--;
+    if (trail.life <= 0) bulletTrails.splice(i, 1);
   });
 }
 
@@ -868,7 +1221,7 @@ function spawnPowerUps() {
       
       // Add premium power-ups for subscribers or level 3+
       if (playerData.subscription || level >= 3) {
-        availablePowerUps = availablePowerUps.concat(PREMIUM_FEATURES.PREMIUM_POWER_UPS);
+        availablePowerUps = availablePowerUps.concat(PREMIUM_POWER_UPS);
       }
       
       const powerupType = availablePowerUps[Math.floor(Math.random() * availablePowerUps.length)];
@@ -978,6 +1331,42 @@ function showLevelMessage(message) {
   }
 }
 
+// --- GLOBALS FOR EFFECTS/UI POLISH ---
+let screenShakeFrames = 0;
+let screenShakeIntensity = 0;
+let bulletTrails = [];
+const BULLET_TRAIL_COLORS = [
+  'rgba(255,255,100,0.7)', // yellow
+  'rgba(100,200,255,0.6)', // blue
+  'rgba(255,120,40,0.5)'   // orange
+];
+let scorePop = 0, coinsPop = 0, livesPop = 0;
+let lastScore = 0, lastCoins = 0, lastLives = 0;
+let floatingTexts = [];
+let comboCount = 0, comboTimer = 0;
+
+// Animated background layers and helpers
+const bgLayers = [
+  { speed: 0.2, color: '#222', y: 480, h: 120 }, // distant ground
+  { speed: 0.4, color: '#2d2d2d', y: 420, h: 60 }, // mid ground
+  { speed: 0.7, color: '#3a3a2d', y: 390, h: 40 }, // near ground
+];
+let bgClouds = Array.from({length: 5}, (_,i) => ({
+  x: Math.random()*960,
+  y: 60+Math.random()*80,
+  speed: 0.15+Math.random()*0.1,
+  w: 120+Math.random()*60,
+  h: 40+Math.random()*20
+}));
+let bgTrees = Array.from({length: 8}, (_,i) => ({
+  x: Math.random()*960,
+  y: 350+Math.random()*60,
+  speed: 0.5+Math.random()*0.2,
+  h: 60+Math.random()*30
+}));
+let lastLevelDrawn = 1;
+let levelAnimFrame = 0;
+
 function handleCollisions() {
   // Bullet vs Enemy collisions
   bullets.forEach((bullet, bulletIndex) => {
@@ -994,9 +1383,29 @@ function handleCollisions() {
           coins += Math.floor(enemy.points / 10);
           hitSound.play().catch(() => {});
           enemies.splice(enemyIndex, 1);
+          // Animate score/coin pop
+          scorePop = 12;
+          coinsPop = 12;
+          // Floating text
+          floatingTexts.push({
+            x: enemy.x, y: enemy.y, text: `+${enemy.points} pts`, color: 'yellow', life: 32
+          });
+          floatingTexts.push({
+            x: enemy.x, y: enemy.y+18, text: `+${Math.floor(enemy.points/10)} coins`, color: 'gold', life: 32
+          });
+          // Combo logic
+          comboCount++;
+          comboTimer = 40;
         }
         
         bullets.splice(bulletIndex, 1);
+        // Impact explosion
+        createParticles(enemy.x, enemy.y, 'explosion');
+        // Screen shake for large enemies
+        if (enemy.radius >= 35) {
+          screenShakeFrames = 18;
+          screenShakeIntensity = 14;
+        }
       }
     });
     
@@ -1015,7 +1424,23 @@ function handleCollisions() {
           coins += 10;
           hitSound.play().catch(() => {});
           bossEnemies.splice(bossIndex, 1);
+          // Animate score/coin pop
+          scorePop = 16;
+          coinsPop = 16;
+          floatingTexts.push({
+            x: boss.x+boss.width/2, y: boss.y+boss.height/2, text: '+100 pts', color: 'yellow', life: 40
+          });
+          floatingTexts.push({
+            x: boss.x+boss.width/2, y: boss.y+boss.height/2+18, text: '+10 coins', color: 'gold', life: 40
+          });
+          comboCount++;
+          comboTimer = 40;
         }
+        // Impact explosion
+        createParticles(bullet.x, bullet.y, 'explosion');
+        // Screen shake for boss
+        screenShakeFrames = 28;
+        screenShakeIntensity = 22;
       }
     });
   });
@@ -1264,9 +1689,47 @@ function update() {
   }
   
   checkLevelProgression();
+  
+  // Animate score/coin/life pop
+  if (score !== lastScore) scorePop = 14;
+  if (coins !== lastCoins) coinsPop = 14;
+  if (lives !== lastLives) livesPop = 14;
+  lastScore = score;
+  lastCoins = coins;
+  lastLives = lives;
+  if (scorePop > 0) scorePop--;
+  if (coinsPop > 0) coinsPop--;
+  if (livesPop > 0) livesPop--;
+  // Update floating texts
+  floatingTexts.forEach((ft, i) => {
+    ft.y -= 0.7;
+    ft.life--;
+    if (ft.life <= 0) floatingTexts.splice(i, 1);
+  });
+  // Combo timer
+  if (comboTimer > 0) comboTimer--;
+  if (comboTimer === 0 && comboCount > 1) {
+    // Show combo popup
+    floatingTexts.push({
+      x: canvas.width/2, y: 120, text: `${comboCount} KILL COMBO!`, color: '#ff66cc', life: 48, size: 28
+    });
+    comboCount = 0;
+  } else if (comboTimer === 0) {
+    comboCount = 0;
+  }
 }
 
 function draw() {
+  // Screen shake effect
+  if (screenShakeFrames > 0) {
+    ctx.save();
+    const dx = (Math.random() - 0.5) * screenShakeIntensity;
+    const dy = (Math.random() - 0.5) * screenShakeIntensity;
+    ctx.translate(dx, dy);
+    screenShakeFrames--;
+  }
+  // Animated background
+  drawAnimatedBackground();
   // Fill with black background instead of clearing
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1382,7 +1845,7 @@ function draw() {
     }
   });
 
-  // Draw particles
+  // Draw particles (includes bullet trails)
   drawParticles();
 
   // Draw active power-up effects
@@ -1426,25 +1889,109 @@ function draw() {
   });
 
   // Draw UI (with offset)
-  ctx.fillStyle = "white";
-  ctx.font = "18px Arial";
-  ctx.fillText(`Score: ${score}  Lives: ${lives}  Coins: ${coins}  Wave: ${wave}`, 20, 30 + uiOffsetY);
-
-  // Draw player name if available
-  if (playerData.name) {
-    ctx.fillStyle = "#4CAF50";
-    ctx.font = "16px Arial";
-    ctx.fillText(`Player: ${playerData.name}`, 20, 55 + uiOffsetY);
+  if (!isMobile) {
+    // Desktop UI - Soft glow for UI
+    ctx.save();
+    ctx.shadowColor = '#ffe066';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "white";
+    ctx.font = `bold ${18 + (scorePop>0?scorePop/2:0)}px Arial`;
+    ctx.fillText(`Score: ${score}`, 20, 30 + uiOffsetY);
+    ctx.font = `bold ${18 + (livesPop>0?livesPop/2:0)}px Arial`;
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillText(`Lives: ${lives}`, 160, 30 + uiOffsetY);
+    ctx.font = `bold ${18 + (coinsPop>0?coinsPop/2:0)}px Arial`;
+    ctx.fillStyle = 'gold';
+    ctx.fillText(`Coins: ${coins}`, 260, 30 + uiOffsetY);
+    ctx.restore();
+    ctx.fillStyle = "white";
+    ctx.font = "18px Arial";
+    ctx.fillText(`Wave: ${wave}`, 380, 30 + uiOffsetY);
+    // Draw player name if available
+    if (playerData.name) {
+      ctx.fillStyle = "#4CAF50";
+      ctx.font = "16px Arial";
+      ctx.fillText(`Player: ${playerData.name}`, 20, 55 + uiOffsetY);
+    }
+  } else {
+    // Mobile UI - Update HTML elements instead of drawing on canvas
+    const scoreText = document.getElementById('scoreText');
+    const livesText = document.getElementById('livesText');
+    const coinsText = document.getElementById('coinsText');
+    const levelText = document.getElementById('levelText');
+    
+    if (scoreText) scoreText.textContent = `Score: ${score}`;
+    if (livesText) livesText.textContent = `Lives: ${lives}`;
+    if (coinsText) coinsText.textContent = `Coins: ${coins}`;
+    if (levelText) levelText.textContent = `Level ${level}: ${getLevelDisplayName(level)}`;
   }
-
-  // Draw current level theme
-  const currentTheme = getLevelDisplayName(level);
-  ctx.fillStyle = "gold";
-  ctx.font = "16px Arial";
-  ctx.fillText(`Level ${level}: ${currentTheme}`, 20, playerData.name ? 80 + uiOffsetY : 50 + uiOffsetY);
-
+  
+  // Debug: Show player position and speed (temporary)
+  if (window.debugMode) {
+    ctx.fillStyle = "#ff00ff";
+    ctx.font = "12px Arial";
+    ctx.fillText(`Player X: ${Math.round(player.x)} | Speed: ${player.speed}`, 20, 200 + uiOffsetY);
+    ctx.fillText(`Keys: L=${keys['ArrowLeft']} R=${keys['ArrowRight']}`, 20, 215 + uiOffsetY);
+    ctx.fillText(`Canvas: ${canvas.width}x${canvas.height}`, 20, 230 + uiOffsetY);
+    
+    // Draw player position indicator
+    ctx.save();
+    ctx.strokeStyle = "#ff00ff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(player.x, 0);
+    ctx.lineTo(player.x, canvas.height);
+    ctx.stroke();
+    ctx.restore();
+    
+    // Draw button area indicator
+    ctx.save();
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(canvas.width - 280, 25, 260, 20);
+    ctx.fillStyle = "#00ff00";
+    ctx.font = "10px Arial";
+    ctx.fillText("BUTTON AREA", canvas.width - 270, 20);
+    ctx.restore();
+    
+    // Show button health status
+    let buttonsHealthy = true;
+    canvasButtons.forEach(btn => {
+      if (!btn._rect || typeof btn._rect.x !== 'number') {
+        buttonsHealthy = false;
+      }
+    });
+    
+    if (!buttonsHealthy) {
+      ctx.fillStyle = "#ff0000";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText("⚠️ BUTTONS NOT RESPONDING", canvas.width - 280, 50);
+    }
+  }
+  // Animate level/theme text when it changes
+  if (level !== lastLevelDrawn) {
+    levelAnimFrame = 40;
+    lastLevelDrawn = level;
+  }
+  if (levelAnimFrame > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.5 + 0.5*Math.sin(levelAnimFrame/4);
+    ctx.font = "bold 22px Arial";
+    ctx.fillStyle = "#ffe066";
+    ctx.fillText(`Level ${level}: ${getLevelDisplayName(level)}`, 20, playerData.name ? 80 + uiOffsetY : 50 + uiOffsetY);
+    ctx.restore();
+    levelAnimFrame--;
+  } else {
+    ctx.fillStyle = "gold";
+    ctx.font = "16px Arial";
+    ctx.fillText(`Level ${level}: ${getLevelDisplayName(level)}`, 20, playerData.name ? 80 + uiOffsetY : 50 + uiOffsetY);
+  }
   // Draw subscription status
-  if (playerData.subscription) {
+  if (playerData.isAdmin) {
+    ctx.fillStyle = "#ff00cc";
+    ctx.font = "bold 16px Arial";
+    ctx.fillText("👑 ADMIN MODE: All features unlocked", 20, playerData.name ? 125 + uiOffsetY : 95 + uiOffsetY);
+  } else if (playerData.subscription) {
     ctx.fillStyle = "#4CAF50";
     ctx.font = "14px Arial";
     ctx.fillText("✅ Premium Subscriber", 20, playerData.name ? 105 + uiOffsetY : 75 + uiOffsetY);
@@ -1474,54 +2021,106 @@ function draw() {
       ctx.restore();
     });
   }
+  // End screen shake
+  if (screenShakeFrames > 0) {
+    ctx.restore();
+  }
+  // Draw floating texts
+  floatingTexts.forEach(ft => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, ft.life/32);
+    ctx.font = ft.size ? `bold ${ft.size}px Arial` : 'bold 18px Arial';
+    ctx.fillStyle = ft.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  });
+  // Animate Share Score button when paused
+  if (gamePaused && !shopOpen) {
+    const shareButtonY = canvas.height / 2 + 80;
+    const shareButtonWidth = 200;
+    const shareButtonHeight = 50;
+    const shareButtonX = canvas.width / 2 - shareButtonWidth / 2;
+    ctx.save();
+    ctx.shadowColor = '#4fc3f7';
+    ctx.shadowBlur = 24 + 8*Math.sin(Date.now()/200);
+    ctx.strokeStyle = '#4fc3f7';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(shareButtonX-4, shareButtonY-4, shareButtonWidth+8, shareButtonHeight+8);
+    ctx.restore();
+  }
+  // Only draw canvas buttons on desktop
+  if (!isMobile) {
+    drawCanvasButtons();
+  }
 }
 
 function drawStartScreen() {
+  const fontSize = isMobile ? 24 : 40;
+  const titleFontSize = isMobile ? 28 : 40;
+  const subtitleFontSize = isMobile ? 14 : 20;
+  const smallFontSize = isMobile ? 12 : 16;
+  
   ctx.fillStyle = "white";
-  ctx.font = "40px Arial";
-  ctx.fillText("🦖 DINO WARFARE", canvas.width / 2 - 180, canvas.height / 2 - 120);
-  ctx.font = "20px Arial";
-  ctx.fillText("Fruit of the Spirit Edition", canvas.width / 2 - 120, canvas.height / 2 - 80);
+  ctx.font = `${titleFontSize}px Arial`;
+  ctx.fillText("🦖 DINO WARFARE", canvas.width / 2 - (titleFontSize * 4.5), canvas.height / 2 - 120);
+  ctx.font = `${subtitleFontSize}px Arial`;
+  ctx.fillText("Fruit of the Spirit Edition", canvas.width / 2 - (subtitleFontSize * 6), canvas.height / 2 - 80);
   
   // Show creator information
   ctx.fillStyle = "#4CAF50";
-  ctx.font = "16px Arial";
-  ctx.fillText("Created by David Oshoba George", canvas.width / 2 - 120, canvas.height / 2 - 50);
+  ctx.font = `${smallFontSize}px Arial`;
+  ctx.fillText("Created by David Oshoba George", canvas.width / 2 - (smallFontSize * 7.5), canvas.height / 2 - 50);
   
   // Show player name if available
   if (playerData.name) {
     ctx.fillStyle = "gold";
-    ctx.font = "18px Arial";
-    ctx.fillText(`Welcome back, ${playerData.name}!`, canvas.width / 2 - 100, canvas.height / 2 - 20);
+    ctx.font = `${smallFontSize + 2}px Arial`;
+    ctx.fillText(`Welcome back, ${playerData.name}!`, canvas.width / 2 - (smallFontSize * 5.5), canvas.height / 2 - 20);
   }
   
   ctx.fillStyle = "white";
-  ctx.font = "24px Arial";
-  ctx.fillText("Click to Start", canvas.width / 2 - 80, canvas.height / 2 + 10);
+  ctx.font = `${fontSize}px Arial`;
+  const startText = isMobile ? "Tap to Start" : "Click to Start";
+  ctx.fillText(startText, canvas.width / 2 - (fontSize * 3), canvas.height / 2 + 10);
   
-  ctx.font = "16px Arial";
-  ctx.fillText("Controls:", canvas.width / 2 - 100, canvas.height / 2 + 50);
-  ctx.fillText("Arrow Keys - Move", canvas.width / 2 - 100, canvas.height / 2 + 70);
-  ctx.fillText("Spacebar - Shoot", canvas.width / 2 - 100, canvas.height / 2 + 90);
-  ctx.fillText("P - Pause/Resume", canvas.width / 2 - 100, canvas.height / 2 + 110);
-  ctx.fillText("S - Open/Close Shop", canvas.width / 2 - 100, canvas.height / 2 + 130);
-  ctx.fillText("D - Debug Mode", canvas.width / 2 - 100, canvas.height / 2 + 150);
+  ctx.font = `${smallFontSize}px Arial`;
+  ctx.fillText("Controls:", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 50);
   
-  ctx.font = "14px Arial";
+  if (isMobile) {
+    ctx.fillText("Joystick - Move", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 70);
+    ctx.fillText("🎯 Button - Shoot", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 90);
+    ctx.fillText("⏸ Button - Pause", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 110);
+    ctx.fillText("🛒 Button - Shop", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 130);
+    ctx.fillText("☰ Menu - More Options", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 150);
+  } else {
+    ctx.fillText("Arrow Keys - Move", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 70);
+    ctx.fillText("Spacebar - Shoot", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 90);
+    ctx.fillText("P - Pause/Resume", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 110);
+    ctx.fillText("S - Open/Close Shop", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 130);
+    ctx.fillText("D - Debug Mode", canvas.width / 2 - (smallFontSize * 3.5), canvas.height / 2 + 150);
+  }
+  
+  ctx.font = `${smallFontSize - 2}px Arial`;
   ctx.fillStyle = "gold";
-  ctx.fillText("Level Themes: Love, Joy, Peace, Patience, Kindness...", canvas.width / 2 - 150, canvas.height / 2 + 180);
-  ctx.fillText("💡 Buy 'Extra Diagonal Bullets' in shop for additional 4-way fire!", canvas.width / 2 - 150, canvas.height / 2 + 200);
+  ctx.fillText("Level Themes: Love, Joy, Peace, Patience, Kindness...", canvas.width / 2 - (smallFontSize * 7.5), canvas.height / 2 + 180);
+  ctx.fillText("💡 Buy 'Extra Diagonal Bullets' in shop for additional 4-way fire!", canvas.width / 2 - (smallFontSize * 7.5), canvas.height / 2 + 200);
 }
 
 function drawGameOverScreen() {
+  const fontSize = isMobile ? 24 : 40;
+  const smallFontSize = isMobile ? 16 : 24;
+  
   ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "white";
-  ctx.font = "40px Arial";
-  ctx.fillText("GAME OVER", canvas.width / 2 - 100, canvas.height / 2 - 50);
-  ctx.font = "24px Arial";
-  ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 80, canvas.height / 2);
-  ctx.fillText("Click to restart", canvas.width / 2 - 80, canvas.height / 2 + 50);
+  ctx.font = `${fontSize}px Arial`;
+  ctx.fillText("GAME OVER", canvas.width / 2 - (fontSize * 2.5), canvas.height / 2 - 50);
+  ctx.font = `${smallFontSize}px Arial`;
+  ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - (smallFontSize * 3), canvas.height / 2);
+  const restartText = isMobile ? "Tap to restart" : "Click to restart";
+  ctx.fillText(restartText, canvas.width / 2 - (smallFontSize * 3), canvas.height / 2 + 50);
 }
 
 function drawShopInterface() {
@@ -1865,6 +2464,13 @@ window.addEventListener('load', () => {
   initializeCanvas();
   initializeSound();
 
+  // Initialize mobile controls
+  if (isMobile) {
+    initJoystick();
+    initMobileButtons();
+    console.log('Mobile controls initialized');
+  }
+
   // Ensure canvas has black background
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1874,21 +2480,42 @@ window.addEventListener('load', () => {
     window.startGameFromAuth();
   }
 
-  // Debug overlay
+  // Debug overlay (desktop only)
+  if (!isMobile) {
+    setInterval(() => {
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = '#222';
+      ctx.fillRect(10, 10, 260, 90);
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px monospace';
+      ctx.fillText(`gameStarted: ${gameStarted}`, 20, 30);
+      ctx.fillText(`gamePaused: ${gamePaused}`, 20, 50);
+      ctx.fillText(`gameOver: ${gameOver}`, 20, 70);
+      ctx.fillText(`shopOpen: ${shopOpen}`, 20, 90);
+      ctx.restore();
+    }, 500);
+  }
+
+  // Button health check - ensure buttons remain responsive
   setInterval(() => {
-    ctx.save();
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = '#222';
-    ctx.fillRect(10, 10, 260, 90);
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = '#fff';
-    ctx.font = '14px monospace';
-    ctx.fillText(`gameStarted: ${gameStarted}`, 20, 30);
-    ctx.fillText(`gamePaused: ${gamePaused}`, 20, 50);
-    ctx.fillText(`gameOver: ${gameOver}`, 20, 70);
-    ctx.fillText(`shopOpen: ${shopOpen}`, 20, 90);
-    ctx.restore();
-  }, 500);
+    if (gameStarted && !gameOver) {
+      // Check if buttons have valid rectangles
+      let buttonsValid = true;
+      canvasButtons.forEach((btn, index) => {
+        if (!btn._rect || typeof btn._rect.x !== 'number' || typeof btn._rect.y !== 'number') {
+          console.warn(`Button ${index} (${btn.key}) has invalid rectangle:`, btn._rect);
+          buttonsValid = false;
+        }
+      });
+      
+      if (!buttonsValid) {
+        console.log('Button health check failed - forcing button redraw');
+        window.forceButtonRedraw = true;
+      }
+    }
+  }, 2000); // Check every 2 seconds
 
   console.log('DinoWarfare initialized successfully');
   console.log('Canvas size:', canvas.width, 'x', canvas.height);
@@ -1901,3 +2528,166 @@ window.addEventListener('load', () => {
 
 // Start the game loop
 gameLoop(); 
+
+// --- Animated Prehistoric Background ---
+function drawAnimatedBackground() {
+  // Sky gradient
+  const grad = ctx.createLinearGradient(0,0,0,canvas.height);
+  grad.addColorStop(0, '#181c24');
+  grad.addColorStop(1, '#232323');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Parallax ground layers
+  bgLayers.forEach((layer, i) => {
+    ctx.save();
+    ctx.fillStyle = layer.color;
+    ctx.beginPath();
+    ctx.moveTo(0, layer.y);
+    for (let x = 0; x <= canvas.width; x += 80) {
+      ctx.lineTo(x, layer.y + Math.sin((x/80 + i + Date.now()/4000*layer.speed)) * 10);
+    }
+    ctx.lineTo(canvas.width, layer.y+layer.h);
+    ctx.lineTo(0, layer.y+layer.h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  });
+  // Trees (simple silhouettes)
+  bgTrees.forEach(tree => {
+    tree.x -= tree.speed;
+    if (tree.x < -20) tree.x = 980;
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#2e3d1f';
+    ctx.fillRect(tree.x, tree.y, 12, tree.h);
+    ctx.beginPath();
+    ctx.arc(tree.x+6, tree.y, 18, Math.PI, 0);
+    ctx.fillStyle = '#3e5d2d';
+    ctx.fill();
+    ctx.restore();
+  });
+  // Clouds
+  bgClouds.forEach(cloud => {
+    cloud.x -= cloud.speed;
+    if (cloud.x < -cloud.w) cloud.x = 980;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(cloud.x, cloud.y, cloud.w, cloud.h, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+} 
+
+// Move or ensure startGameFromAuth is defined before this point
+function startGameFromAuth() {
+  loadPlayerData();
+  if (playerData.avatar) {
+    playerAvatarImg.src = playerData.avatar;
+  }
+  gameStarted = true;
+  gamePaused = false;
+  gameOver = false;
+  shopOpen = false;
+  score = 0;
+  lives = 4;
+  coins = 0;
+  wave = 1;
+  level = 1;
+  levelTransition = false;
+  levelTransitionTimer = 0;
+  lastEnemySpawn = Date.now() - 10000;
+  lastPowerupSpawn = Date.now();
+  bullets = [];
+  enemies = [];
+  bossEnemies = [];
+  fireballs = [];
+  powerUps = [];
+  particles = [];
+  bulletTrails = [];
+  player.x = canvas.width / 2;
+  player.y = canvas.height - 100;
+  player.shield = false;
+  player.bulletCooldown = 0;
+  player.speed = 8;
+  player.bulletSpeed = 12;
+  player.maxBullets = 3;
+  player.bulletSize = 4;
+  player.diagonalShooting = false;
+  if (playerData.subscription) {
+    player.speed += 2;
+    player.bulletSpeed += 3;
+    player.maxBullets += 1;
+  }
+  window.purchaseMessages = [];
+  window.levelMessages = [];
+  window.lastWaveTime = Date.now() - 25000;
+  window.lastLevelWave = 0;
+  window.lastRapidFireWave = 0;
+  window.lastBossRushWave = 0;
+  bgMusic.play().catch(() => {});
+  console.log('Game started from authentication system');
+  console.log('Player data:', playerData);
+}
+window.startGameFromAuth = startGameFromAuth;
+
+
+
+
+
+function createParticles(x, y, type) {
+  for (let i = 0; i < 20; i++) {
+    particles.push({
+      x: x,
+      y: y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: 30,
+      maxLife: 30,
+      color: type === 'explosion' ? 'orange' : 'yellow',
+      size: Math.random() * 3 + 2
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function drawParticles() {
+  // Draw bullet trails first (under everything)
+  if (typeof bulletTrails !== 'undefined') {
+    bulletTrails.forEach(trail => {
+      ctx.save();
+      ctx.globalAlpha = trail.life / 18;
+      ctx.beginPath();
+      ctx.arc(trail.x, trail.y, trail.radius, 0, Math.PI * 2);
+      ctx.fillStyle = trail.color;
+      ctx.shadowColor = trail.color;
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+  if (typeof particles !== 'undefined') {
+    particles.forEach(particle => {
+      const alpha = particle.life / (particle.maxLife || 1);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size || 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+}
