@@ -2594,6 +2594,13 @@ window.addEventListener('load', () => {
     hit: hitSound.readyState,
     bgMusic: bgMusic.readyState
   });
+
+  // Attempt to lock orientation to portrait on supported browsers
+  if (window.screen.orientation && window.screen.orientation.lock) {
+    window.screen.orientation.lock('portrait').catch(function(e) {
+      console.log('Orientation lock failed:', e);
+    });
+  }
 });
 
 // Start the game loop
@@ -2767,4 +2774,65 @@ function drawParticles() {
       ctx.restore();
     });
   }
+}
+
+if (isMobile) {
+  // --- Enhanced debugging for shop BUY buttons ---
+  function handleShopTouch(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : null);
+    if (!touch) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    console.log('[DEBUG] Canvas touch at:', x, y, 'shopOpen:', shopOpen, 'gameStarted:', gameStarted, 'gameOver:', gameOver);
+
+    // Draw a visual indicator where the user tapped
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.7;
+    ctx.stroke();
+    ctx.restore();
+
+    // If game not started or game over, start game on touch
+    if (!gameStarted || gameOver) {
+      startGameFromAuth();
+      return;
+    }
+
+    // Handle shop BUY button touches
+    if (shopOpen) {
+      const startY = 160;
+      const itemHeight = 60;
+      SHOP_ITEMS.forEach((item, index) => {
+        const itemY = startY + (index * itemHeight);
+        const canAfford = coins >= item.cost;
+        const buttonX = canvas.width / 2 + 50;
+        const buttonY = itemY - 5;
+        const buttonWidth = 80;
+        const buttonHeight = 40;
+        console.log(`[DEBUG] Checking button for ${item.name}: x=${buttonX}-${buttonX+buttonWidth}, y=${buttonY}-${buttonY+buttonHeight}, canAfford=${canAfford}`);
+        if (x >= buttonX && x <= buttonX + buttonWidth &&
+            y >= buttonY && y <= buttonY + buttonHeight) {
+          if (canAfford) {
+            console.log('✅ Buying (touch):', item.name, 'for', item.cost, 'coins');
+            buyShopItem(item);
+          } else {
+            console.log('❌ Not enough coins for (touch):', item.name);
+            showPurchaseMessage(`❌ Not enough coins for ${item.name}`);
+          }
+        }
+      });
+      return;
+    }
+  }
+  canvas.addEventListener('touchstart', handleShopTouch, { passive: false });
+  // Add touchend fallback for Android browsers
+  canvas.addEventListener('touchend', handleShopTouch, { passive: false });
 }
