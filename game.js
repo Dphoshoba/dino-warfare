@@ -326,20 +326,35 @@ function handlePlayerTouch(e) {
     playerTouchX = touchX;
     playerTouchY = touchY;
     
-    // Move player towards touch position
-    const dx = touchX - player.x;
-    const dy = touchY - player.y;
+    // Calculate target position with bounds checking
+    let targetX = touchX;
+    let targetY = touchY;
+    
+    // Keep player within safe bounds (not too close to edges)
+    const safeMargin = 50;
+    targetX = Math.max(safeMargin, Math.min(canvas.width - safeMargin, targetX));
+    targetY = Math.max(safeMargin, Math.min(canvas.height - safeMargin, targetY));
+    
+    // Calculate movement direction
+    const dx = targetX - player.x;
+    const dy = targetY - player.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > 5) { // Only move if touch is not too close to player
+    if (distance > 10) { // Only move if touch is not too close to player
+      // Normalize direction and apply smooth movement
       joystickX = dx / distance;
       joystickY = dy / distance;
       joystickActive = true;
-    }
-    
-    // Debug: Log player touch occasionally
-    if (Math.random() < 0.05) { // 5% chance each touch
-      console.log('Player touch:', { x: touchX, y: touchY, playerX: player.x, playerY: player.y });
+      
+      // Debug: Log player touch occasionally
+      if (Math.random() < 0.05) { // 5% chance each touch
+        console.log('Player touch:', { 
+          touchX, touchY, 
+          targetX, targetY,
+          playerX: player.x, playerY: player.y,
+          distance: Math.round(distance)
+        });
+      }
     }
   }
 }
@@ -878,16 +893,20 @@ function showPurchaseMessage(itemName) {
 }
 
 function enforcePlayerBounds() {
-  // Ensure player doesn't get stuck at boundaries
-  const minX = player.radius;
-  const maxX = canvas.width - player.radius;
+  // Ensure player doesn't get stuck at boundaries with better bounds checking
+  const safeMargin = 40; // Keep player away from edges
+  const minX = safeMargin;
+  const maxX = canvas.width - safeMargin;
+  const minY = safeMargin;
+  const maxY = canvas.height - safeMargin;
   
-  if (player.x < minX) player.x = minX;
-  if (player.x > maxX) player.x = maxX;
+  // Smoothly clamp player position
+  player.x = Math.max(minX, Math.min(maxX, player.x));
+  player.y = Math.max(minY, Math.min(maxY, player.y));
   
   // Debug: Log if player is at boundary
-  if (window.debugMode && (player.x === minX || player.x === maxX)) {
-    console.log('Player at boundary:', { x: player.x, minX, maxX });
+  if (window.debugMode && (player.x === minX || player.x === maxX || player.y === minY || player.y === maxY)) {
+    console.log('Player at boundary:', { x: player.x, y: player.y, minX, maxX, minY, maxY });
   }
 }
 
@@ -978,17 +997,30 @@ function updatePlayer() {
   
   // Handle movement - keyboard or joystick
   if (isMobile && joystickActive) {
-    // Mobile joystick movement
-    const moveSpeed = player.speed * Math.abs(joystickX);
-    if (joystickX < -0.1) {
-      player.x -= moveSpeed;
-    } else if (joystickX > 0.1) {
-      player.x += moveSpeed;
+    // Mobile direct touch movement - smoother and more responsive
+    const moveSpeed = player.speed * 1.2; // Slightly faster for better responsiveness
+    
+    // Apply movement based on joystick direction
+    if (Math.abs(joystickX) > 0.1) {
+      player.x += joystickX * moveSpeed;
     }
+    if (Math.abs(joystickY) > 0.1) {
+      player.y += joystickY * moveSpeed;
+    }
+    
+    // Ensure player stays within bounds
+    const safeMargin = 40;
+    player.x = Math.max(safeMargin, Math.min(canvas.width - safeMargin, player.x));
+    player.y = Math.max(safeMargin, Math.min(canvas.height - safeMargin, player.y));
+    
   } else {
-    // Keyboard movement
+    // Keyboard movement (desktop)
     if (keys['ArrowLeft']) player.x -= player.speed;
     if (keys['ArrowRight']) player.x += player.speed;
+    
+    // Keep player in vertical bounds for keyboard too
+    const safeMargin = 40;
+    player.y = Math.max(safeMargin, Math.min(canvas.height - safeMargin, player.y));
   }
   
   // Shooting
@@ -2002,6 +2034,20 @@ function draw() {
       ctx.font = "bold 14px Arial";
       ctx.fillText("⚠️ BUTTONS NOT RESPONDING", canvas.width - 280, 120);
     }
+  }
+  
+  // Mobile: Show safe movement area indicator
+  if (isMobile && window.debugMode) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 255, 0, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
+    ctx.fillStyle = "rgba(0, 255, 0, 0.1)";
+    ctx.fillRect(40, 40, canvas.width - 80, canvas.height - 80);
+    ctx.fillStyle = "rgba(0, 255, 0, 0.8)";
+    ctx.font = "12px Arial";
+    ctx.fillText("SAFE MOVEMENT AREA", canvas.width / 2 - 60, 35);
+    ctx.restore();
   }
   // Animate level/theme text when it changes
   if (level !== lastLevelDrawn) {
