@@ -966,11 +966,17 @@ function updatePlayer() {
     // Bounds
     const safeMargin = 40;
     player.x = Math.max(safeMargin, Math.min(canvas.width - safeMargin, player.x));
+    // --- Prevent mobile events from setting keys[' '] on desktop ---
+    if (!isMobile) keys[' '] = false;
   } else {
+    // --- Only allow keyboard input on desktop ---
     if (keys['ArrowLeft']) player.x -= player.speed;
     if (keys['ArrowRight']) player.x += player.speed;
     const safeMargin = 40;
     player.y = Math.max(safeMargin, Math.min(canvas.height - safeMargin, player.y));
+    // --- Ensure mobile touch does not affect desktop ---
+    playerTouchActive = false;
+    playerTargetX = null;
   }
   if (keys[' ']) shoot();
   if ((keys['ArrowLeft'] || keys['ArrowRight']) && player.x === prevX) {
@@ -2634,6 +2640,13 @@ function startGameFromAuth() {
   window.lastRapidFireWave = 0;
   window.lastBossRushWave = 0;
   bgMusic.play().catch(() => {});
+  // --- Reset all input states on game start ---
+  keys['ArrowLeft'] = false;
+  keys['ArrowRight'] = false;
+  keys[' '] = false;
+  playerTouchActive = false;
+  playerTargetX = null;
+  // --- End input reset ---
   console.log('Game started from authentication system');
   console.log('Player data:', playerData);
 }
