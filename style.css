@@ -541,7 +541,7 @@ html, body {
   }
 }
 
-@media screen and (orientation:landscape) {
+@media (max-width: 600px) and (orientation:landscape) {
   #gameContainer {
     display: none !important;
   }
