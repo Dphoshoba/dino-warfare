@@ -288,13 +288,27 @@ let joystickRadius = 0;
 
 // Initialize joystick
 function initJoystick() {
-  if (!isMobile) return;
+  if (!isMobile) {
+    console.log('Not mobile device, skipping joystick initialization');
+    return;
+  }
+  
+  console.log('Initializing joystick for mobile...');
   
   const joystickContainer = document.getElementById('joystickContainer');
   const joystickBase = document.getElementById('joystickBase');
   const joystickHandle = document.getElementById('joystickHandle');
   
-  if (!joystickContainer || !joystickBase || !joystickHandle) return;
+  console.log('Joystick elements found:', {
+    container: !!joystickContainer,
+    base: !!joystickBase,
+    handle: !!joystickHandle
+  });
+  
+  if (!joystickContainer || !joystickBase || !joystickHandle) {
+    console.error('Joystick elements not found, cannot initialize');
+    return;
+  }
   
   const rect = joystickBase.getBoundingClientRect();
   joystickBaseX = rect.left + rect.width / 2;
@@ -333,6 +347,11 @@ function handleJoystickTouch(e) {
   }
   
   joystickActive = true;
+  
+  // Debug: Log joystick movement occasionally
+  if (Math.random() < 0.1) { // 10% chance each touch
+    console.log('Joystick moved:', { x: joystickX, y: joystickY, active: joystickActive });
+  }
 }
 
 function handleJoystickRelease() {
@@ -351,16 +370,24 @@ function handleJoystickRelease() {
 
 // Mobile button events
 function initMobileButtons() {
-  if (!isMobile) return;
+  if (!isMobile) {
+    console.log('Not mobile device, skipping mobile button initialization');
+    return;
+  }
+  
+  console.log('Initializing mobile buttons...');
   
   // Shoot button
   const shootBtn = document.getElementById('shootBtn');
+  console.log('Shoot button found:', !!shootBtn);
   if (shootBtn) {
     shootBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      console.log('Shoot button touched!');
       keys[' '] = true; // Trigger shooting
     });
     shootBtn.addEventListener('touchend', () => {
+      console.log('Shoot button released!');
       keys[' '] = false;
     });
   }
@@ -2516,9 +2543,27 @@ window.addEventListener('load', () => {
 
   // Initialize mobile controls
   if (isMobile) {
+    console.log('Setting up mobile controls...');
+    
+    // Try to initialize immediately
     initJoystick();
     initMobileButtons();
-    console.log('Mobile controls initialized');
+    
+    // Also try again after a short delay in case elements weren't ready
+    setTimeout(() => {
+      console.log('Retrying mobile control initialization...');
+      initJoystick();
+      initMobileButtons();
+    }, 500);
+    
+    // And one more time after a longer delay
+    setTimeout(() => {
+      console.log('Final mobile control initialization attempt...');
+      initJoystick();
+      initMobileButtons();
+    }, 1000);
+    
+    console.log('Mobile controls initialization scheduled');
   }
   
   // Ensure canvas has black background
