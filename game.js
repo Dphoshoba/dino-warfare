@@ -1694,6 +1694,11 @@ function draw() {
   // Vertical offset for UI to clear the buttons
   const uiOffsetY = 70;
 
+  // --- Always draw canvas buttons on desktop, even if game is paused, over, or not started ---
+  if (!isMobile) {
+    drawCanvasButtons();
+  }
+
   if (!gameStarted) {
     drawStartScreen();
     return;
