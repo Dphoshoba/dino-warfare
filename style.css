@@ -535,6 +535,12 @@ html, body {
   }
 }
 
+@media (max-width: 600px) {
+  .menu-btn {
+    top: 60px !important;
+  }
+}
+
 @media screen and (orientation:landscape) {
   #gameContainer {
     display: none !important;
