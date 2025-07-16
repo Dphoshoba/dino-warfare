@@ -59,6 +59,11 @@ window.addEventListener('orientationchange', () => {
 });
 
 const ctx = canvas.getContext("2d");
+if (!ctx) {
+  console.error('Failed to get 2D context from canvas!');
+} else {
+  console.log('Canvas 2D context obtained successfully');
+}
 
 // Player data from sign-in
 let playerData = {
@@ -2440,6 +2445,16 @@ Challenge accepted? 💪
 }
 
 function gameLoop() {
+  // Add debug logging for first few frames
+  if (!window.frameCount) {
+    window.frameCount = 0;
+  }
+  window.frameCount++;
+  
+  if (window.frameCount <= 5) {
+    console.log(`Game loop frame ${window.frameCount}: gameStarted=${gameStarted}, gamePaused=${gamePaused}, gameOver=${gameOver}`);
+  }
+  
   update();
   draw();
   requestAnimationFrame(gameLoop);
@@ -2487,6 +2502,15 @@ function initializeSound() {
 
 // Initialize everything when the page loads
 window.addEventListener('load', () => {
+  console.log('Page loaded, initializing game...');
+  
+  // Check if canvas exists
+  if (!canvas) {
+    console.error('Canvas not found!');
+    return;
+  }
+  
+  console.log('Canvas found, initializing...');
   initializeCanvas();
   initializeSound();
 
@@ -2496,14 +2520,19 @@ window.addEventListener('load', () => {
     initMobileButtons();
     console.log('Mobile controls initialized');
   }
-
+  
   // Ensure canvas has black background
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  console.log('Canvas initialized, size:', canvas.width, 'x', canvas.height);
 
   // Auto-start the game for debugging
   if (!gameStarted) {
+    console.log('Auto-starting game...');
     window.startGameFromAuth();
+  } else {
+    console.log('Game already started');
   }
 
   // Debug overlay (desktop only)
