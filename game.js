@@ -373,6 +373,22 @@ function initMobileButtons() {
   if (shopBtn) {
     shopBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      console.log('Shop button touched!');
+      if (gameStarted && !gameOver) {
+        shopOpen = !shopOpen;
+        if (shopOpen) {
+          gamePaused = true;
+          bgMusic.pause();
+        } else {
+          gamePaused = false;
+          bgMusic.play().catch(() => {});
+        }
+      }
+    }, { passive: false });
+    // Add click event fallback for Android browsers
+    shopBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('Shop button clicked (fallback)!');
       if (gameStarted && !gameOver) {
         shopOpen = !shopOpen;
         if (shopOpen) {
