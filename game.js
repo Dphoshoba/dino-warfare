@@ -455,6 +455,13 @@ function initMobileButtons() {
       shareScore();
       mobileMenu.classList.remove('active');
     });
+    // Add click event fallback for iOS
+    mobileShareBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('Mobile share button clicked (iOS fallback)!');
+      shareScore();
+      mobileMenu.classList.remove('active');
+    });
   }
   
   if (mobileDebugBtn) {
@@ -2269,6 +2276,7 @@ function drawPauseScreen() {
 function shareScore() {
   console.log('Share button clicked!');
   console.log('Web Share API available:', !!navigator.share);
+  console.log('User agent:', navigator.userAgent);
   
   // Create a more shareable message
   const shareText = `🦖 DINO WARFARE SCORE CHALLENGE! 🦖
@@ -2282,6 +2290,10 @@ Challenge accepted? 💪
 
 #DinoWarfare #Gaming #Challenge`;
 
+  // Check if we're on iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  console.log('iOS detected:', isIOS);
+
   // Always try Web Share API first (works on mobile and some desktop browsers)
   if (navigator.share) {
     console.log('Attempting to use Web Share API...');
@@ -2290,6 +2302,13 @@ Challenge accepted? 💪
       text: shareText,
       url: window.location.href
     };
+    
+    // On iOS, ensure we're in a secure context (HTTPS)
+    if (isIOS && window.location.protocol !== 'https:') {
+      console.log('iOS requires HTTPS for Web Share API, falling back to social options');
+      showSocialShareOptions();
+      return;
+    }
     
     navigator.share(gameData)
       .then(() => {
