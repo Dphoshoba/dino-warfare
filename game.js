@@ -808,10 +808,46 @@ if (isMobile) {
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    console.log('Canvas touchstart at:', x, y, 'Canvas size:', canvas.width, 'x', canvas.height);
+
     // If game not started or game over, start game on touch
     if (!gameStarted || gameOver) {
       startGameFromAuth();
+      return;
+    }
+
+    // Handle shop BUY button touches
+    if (shopOpen) {
+      const startY = 160;
+      const itemHeight = 60;
+      SHOP_ITEMS.forEach((item, index) => {
+        const itemY = startY + (index * itemHeight);
+        const canAfford = coins >= item.cost;
+        const buttonX = canvas.width / 2 + 50;
+        const buttonY = itemY - 5;
+        const buttonWidth = 80;
+        const buttonHeight = 40;
+        if (canAfford &&
+            x >= buttonX && x <= buttonX + buttonWidth &&
+            y >= buttonY && y <= buttonY + buttonHeight) {
+          console.log('✅ Buying (touch):', item.name, 'for', item.cost, 'coins');
+          buyShopItem(item);
+          return;
+        } else if (!canAfford &&
+                   x >= buttonX && x <= buttonX + buttonWidth &&
+                   y >= buttonY && y <= buttonY + buttonHeight) {
+          console.log('❌ Not enough coins for (touch):', item.name);
+          showPurchaseMessage(`❌ Not enough coins for ${item.name}`);
+          return;
+        }
+      });
+      return;
     }
   }, { passive: false });
 }
