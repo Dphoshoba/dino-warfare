@@ -318,42 +318,32 @@ function handlePlayerTouch(e) {
   const scaleY = canvas.height / rect.height;
   
   const touchX = (touch.clientX - rect.left) * scaleX;
-  const touchY = (touch.clientY - rect.top) * scaleY;
+  // Lock Y to a fixed value near the bottom
+  const fixedY = canvas.height - 100;
   
   // Check if touch is in the right half of the screen (player control area)
   if (touchX > canvas.width / 2) {
     playerTouchActive = true;
     playerTouchX = touchX;
-    playerTouchY = touchY;
+    playerTouchY = fixedY;
     
-    // Calculate target position with bounds checking
+    // Calculate target X with bounds checking
     let targetX = touchX;
-    let targetY = touchY;
-    
-    // Keep player within safe bounds (not too close to edges)
     const safeMargin = 50;
     targetX = Math.max(safeMargin, Math.min(canvas.width - safeMargin, targetX));
-    targetY = Math.max(safeMargin, Math.min(canvas.height - safeMargin, targetY));
     
-    // Calculate movement direction
+    // Only move horizontally
     const dx = targetX - player.x;
-    const dy = targetY - player.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distance = Math.abs(dx);
     
     if (distance > 10) { // Only move if touch is not too close to player
-      // Normalize direction and apply smooth movement
       joystickX = dx / distance;
-      joystickY = dy / distance;
+      joystickY = 0; // No vertical movement
       joystickActive = true;
       
       // Debug: Log player touch occasionally
-      if (Math.random() < 0.05) { // 5% chance each touch
-        console.log('Player touch:', { 
-          touchX, touchY, 
-          targetX, targetY,
-          playerX: player.x, playerY: player.y,
-          distance: Math.round(distance)
-        });
+      if (Math.random() < 0.05) {
+        console.log('Player touch:', { touchX, fixedY, targetX, playerX: player.x, distance: Math.round(distance) });
       }
     }
   }
@@ -997,32 +987,24 @@ function updatePlayer() {
   
   // Handle movement - keyboard or joystick
   if (isMobile && joystickActive) {
-    // Mobile direct touch movement - smoother and more responsive
-    const moveSpeed = player.speed * 1.2; // Slightly faster for better responsiveness
-    
-    // Apply movement based on joystick direction
+    // Mobile direct touch movement - horizontal only
+    const moveSpeed = player.speed * 1.2;
     if (Math.abs(joystickX) > 0.1) {
       player.x += joystickX * moveSpeed;
     }
-    if (Math.abs(joystickY) > 0.1) {
-      player.y += joystickY * moveSpeed;
-    }
-    
+    // Lock Y position
+    player.y = canvas.height - 100;
     // Ensure player stays within bounds
     const safeMargin = 40;
     player.x = Math.max(safeMargin, Math.min(canvas.width - safeMargin, player.x));
-    player.y = Math.max(safeMargin, Math.min(canvas.height - safeMargin, player.y));
-    
   } else {
     // Keyboard movement (desktop)
     if (keys['ArrowLeft']) player.x -= player.speed;
     if (keys['ArrowRight']) player.x += player.speed;
-    
     // Keep player in vertical bounds for keyboard too
     const safeMargin = 40;
     player.y = Math.max(safeMargin, Math.min(canvas.height - safeMargin, player.y));
   }
-  
   // Shooting
   if (keys[' ']) shoot(); // Spacebar or mobile shoot button
   
