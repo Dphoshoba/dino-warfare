@@ -289,6 +289,9 @@ let playerTouchActive = false;
 let playerTouchX = 0;
 let playerTouchY = 0;
 
+// --- Add at the top with other globals ---
+let playerTargetX = null;
+
 // Initialize direct player touch control
 function initPlayerTouchControl() {
   if (!isMobile) {
@@ -309,53 +312,22 @@ function initPlayerTouchControl() {
 // Direct player touch control
 function handlePlayerTouch(e) {
   if (!isMobile || !gameStarted || gameOver) return;
-  
   e.preventDefault();
-  
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  
   const touchX = (touch.clientX - rect.left) * scaleX;
-  // Lock Y to a fixed value near the bottom
-  const fixedY = canvas.height - 100;
-  
-  // Check if touch is in the right half of the screen (player control area)
+  // Only respond to touches on the right half
   if (touchX > canvas.width / 2) {
     playerTouchActive = true;
-    playerTouchX = touchX;
-    playerTouchY = fixedY;
-    
-    // Calculate target X with bounds checking
-    let targetX = touchX;
-    const safeMargin = 50;
-    targetX = Math.max(safeMargin, Math.min(canvas.width - safeMargin, targetX));
-    
-    // Only move horizontally
-    const dx = targetX - player.x;
-    const distance = Math.abs(dx);
-    
-    if (distance > 10) { // Only move if touch is not too close to player
-      joystickX = dx / distance;
-      joystickY = 0; // No vertical movement
-      joystickActive = true;
-      
-      // Debug: Log player touch occasionally
-      if (Math.random() < 0.05) {
-        console.log('Player touch:', { touchX, fixedY, targetX, playerX: player.x, distance: Math.round(distance) });
-      }
-    }
+    playerTargetX = Math.max(50, Math.min(canvas.width - 50, touchX));
   }
 }
 
 function handlePlayerTouchEnd(e) {
   if (!isMobile) return;
-  
   playerTouchActive = false;
-  joystickActive = false;
-  joystickX = 0;
-  joystickY = 0;
+  playerTargetX = null;
 }
 
 // Mobile button events
@@ -979,103 +951,35 @@ function shoot() {
 }
 
 function updatePlayer() {
-  // Ensure player speed is always positive
   if (player.speed <= 0) player.speed = 8;
-  
-  // Store previous position for stuck detection
   const prevX = player.x;
-  
-  // Handle movement - keyboard or joystick
-  if (isMobile && joystickActive) {
-    // Mobile direct touch movement - horizontal only
-    const moveSpeed = player.speed * 1.2;
-    if (Math.abs(joystickX) > 0.1) {
-      player.x += joystickX * moveSpeed;
+  if (isMobile) {
+    // Only move if touch is active and target is set
+    if (playerTouchActive && playerTargetX !== null) {
+      // Smoothly move towards target X
+      const dx = playerTargetX - player.x;
+      const maxStep = player.speed * 1.5; // Cap speed
+      if (Math.abs(dx) > 2) {
+        player.x += Math.sign(dx) * Math.min(Math.abs(dx), maxStep);
+      }
     }
     // Lock Y position
     player.y = canvas.height - 100;
-    // Ensure player stays within bounds
+    // Bounds
     const safeMargin = 40;
     player.x = Math.max(safeMargin, Math.min(canvas.width - safeMargin, player.x));
   } else {
-    // Keyboard movement (desktop)
     if (keys['ArrowLeft']) player.x -= player.speed;
     if (keys['ArrowRight']) player.x += player.speed;
-    // Keep player in vertical bounds for keyboard too
     const safeMargin = 40;
     player.y = Math.max(safeMargin, Math.min(canvas.height - safeMargin, player.y));
   }
-  // Shooting
-  if (keys[' ']) shoot(); // Spacebar or mobile shoot button
-  
-  // Check if player got stuck (position didn't change when keys were pressed)
+  if (keys[' ']) shoot();
   if ((keys['ArrowLeft'] || keys['ArrowRight']) && player.x === prevX) {
     console.log('Player movement stuck detected, resetting position');
-    player.x = canvas.width / 2; // Reset to center
+    player.x = canvas.width / 2;
   }
-  
-  // Keyboard shortcuts
-  if (keys['p'] || keys['P']) {
-    if (gameStarted && !gameOver) {
-      gamePaused = !gamePaused;
-      if (gamePaused) {
-        bgMusic.pause();
-      } else {
-        bgMusic.play().catch(() => {});
-      }
-    }
-  }
-  
-  if (keys['s'] || keys['S']) {
-    if (gameStarted && !gameOver) {
-      shopOpen = !shopOpen;
-      if (shopOpen) {
-        gamePaused = true;
-        bgMusic.pause();
-      } else {
-        gamePaused = false;
-        bgMusic.play().catch(() => {});
-      }
-    }
-  }
-  
-  // Debug mode toggle
-  if (keys['d'] || keys['D']) {
-    if (gameStarted) {
-      window.debugMode = !window.debugMode;
-      console.log('Debug mode:', window.debugMode);
-    }
-  }
-  
-  // Test button actions with keyboard shortcuts
-  if (keys['1']) {
-    console.log('Testing pause button via keyboard');
-    canvasButtons.find(btn => btn.key === 'pause')?.action();
-  }
-  if (keys['2']) {
-    console.log('Testing stop button via keyboard');
-    canvasButtons.find(btn => btn.key === 'stop')?.action();
-  }
-  if (keys['3']) {
-    console.log('Testing resume button via keyboard');
-    canvasButtons.find(btn => btn.key === 'resume')?.action();
-  }
-  if (keys['4']) {
-    console.log('Testing shop button via keyboard');
-    canvasButtons.find(btn => btn.key === 'shop')?.action();
-  }
-  
-  // Emergency button test - press 'T' to test all buttons
-  if (keys['t'] || keys['T']) {
-    console.log('Testing all buttons via keyboard');
-    canvasButtons.forEach((btn, index) => {
-      console.log(`Testing button ${index}: ${btn.key}`);
-      setTimeout(() => btn.action(), index * 500);
-    });
-  }
-  
   enforcePlayerBounds();
-  
   if (player.bulletCooldown > 0) {
     player.bulletCooldown--;
   }
