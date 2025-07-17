@@ -353,16 +353,18 @@ function initMobileButtons() {
       });
     }
     
-    // Pause button
+    // Pause button - iOS-optimized implementation
     const pauseBtn = document.getElementById('pauseBtn');
     console.log('Pause button found:', !!pauseBtn);
     if (pauseBtn) {
-      // Add multiple event listeners for better reliability
-      const pauseButtonHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Pause button activated! Event type:', e.type);
-        console.log('Game state before pause - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+      // iOS-specific detection
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+      console.log('iOS detected:', isIOS, 'Safari detected:', isSafari);
+      
+      // Core pause function
+      const togglePause = () => {
+        console.log('Toggle pause called! Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
         
         if (gameStarted && !gameOver) {
           gamePaused = !gamePaused;
@@ -388,20 +390,114 @@ function initMobileButtons() {
         }
       };
       
-      // Add multiple event types for better compatibility
-      pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false });
-      pauseBtn.addEventListener('click', pauseButtonHandler);
-      pauseBtn.addEventListener('mousedown', pauseButtonHandler);
+      // iOS-specific event handling
+      if (isIOS) {
+        console.log('Setting up iOS-specific pause button handlers...');
+        
+        // iOS Safari requires specific touch handling
+        let touchStartTime = 0;
+        let touchMoved = false;
+        
+        // Touch start - record time and prevent default
+        pauseBtn.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          touchStartTime = Date.now();
+          touchMoved = false;
+          console.log('iOS touchstart on pause button');
+          
+          // Visual feedback
+          pauseBtn.style.transform = 'scale(0.95)';
+          pauseBtn.style.opacity = '0.8';
+        }, { passive: false });
+        
+        // Touch move - mark as moved to prevent accidental triggers
+        pauseBtn.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          touchMoved = true;
+          console.log('iOS touchmove on pause button');
+        }, { passive: false });
+        
+        // Touch end - trigger pause if not moved and short duration
+        pauseBtn.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('iOS touchend on pause button, moved:', touchMoved, 'duration:', Date.now() - touchStartTime);
+          
+          // Reset visual feedback
+          pauseBtn.style.transform = 'scale(1)';
+          pauseBtn.style.opacity = '1';
+          
+          // Only trigger if touch was short and didn't move
+          if (!touchMoved && (Date.now() - touchStartTime) < 500) {
+            console.log('iOS pause button triggered!');
+            togglePause();
+          }
+        }, { passive: false });
+        
+        // Touch cancel - reset state
+        pauseBtn.addEventListener('touchcancel', (e) => {
+          e.preventDefault();
+          console.log('iOS touchcancel on pause button');
+          pauseBtn.style.transform = 'scale(1)';
+          pauseBtn.style.opacity = '1';
+          touchMoved = false;
+        }, { passive: false });
+        
+        // Also add click event as fallback for iOS
+        pauseBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('iOS click fallback on pause button');
+          togglePause();
+        });
+        
+        // Add pointer events for iOS 13+
+        pauseBtn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          console.log('iOS pointerdown on pause button');
+        }, { passive: false });
+        
+        pauseBtn.addEventListener('pointerup', (e) => {
+          e.preventDefault();
+          console.log('iOS pointerup on pause button');
+          togglePause();
+        }, { passive: false });
+        
+      } else {
+        // Non-iOS devices - standard event handling
+        console.log('Setting up standard pause button handlers...');
+        
+        const pauseButtonHandler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Pause button activated! Event type:', e.type);
+          togglePause();
+        };
+        
+        // Add multiple event types for better compatibility
+        pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false });
+        pauseBtn.addEventListener('click', pauseButtonHandler);
+        pauseBtn.addEventListener('mousedown', pauseButtonHandler);
+        
+        // Add visual feedback
+        pauseBtn.addEventListener('touchstart', () => {
+          pauseBtn.style.transform = 'scale(0.95)';
+        });
+        pauseBtn.addEventListener('touchend', () => {
+          pauseBtn.style.transform = 'scale(1)';
+        });
+        pauseBtn.addEventListener('touchcancel', () => {
+          pauseBtn.style.transform = 'scale(1)';
+        });
+      }
       
-      // Add visual feedback
-      pauseBtn.addEventListener('touchstart', () => {
-        pauseBtn.style.transform = 'scale(0.95)';
-      });
-      pauseBtn.addEventListener('touchend', () => {
-        pauseBtn.style.transform = 'scale(1)';
-      });
-      pauseBtn.addEventListener('touchcancel', () => {
-        pauseBtn.style.transform = 'scale(1)';
+      // Add global click handler as ultimate fallback
+      document.addEventListener('click', (e) => {
+        if (e.target === pauseBtn) {
+          console.log('Global click handler caught pause button click');
+          togglePause();
+        }
       });
       
       console.log('Pause button event listeners attached successfully');
@@ -2754,6 +2850,34 @@ window.addEventListener('load', () => {
       initMobileButtons();
     }, 2000);
     
+    // Extra attempts specifically for iOS Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      console.log('iOS detected - adding extra initialization attempts...');
+      
+      // iOS Safari often needs multiple attempts
+      setTimeout(() => {
+        console.log('iOS Safari initialization attempt 1...');
+        initPlayerTouchControl();
+        initMobileButtons();
+      }, 3000);
+      
+      setTimeout(() => {
+        console.log('iOS Safari initialization attempt 2...');
+        initPlayerTouchControl();
+        initMobileButtons();
+      }, 5000);
+      
+      // Final attempt after user interaction
+      document.addEventListener('touchstart', () => {
+        console.log('User interaction detected - final iOS initialization...');
+        setTimeout(() => {
+          initPlayerTouchControl();
+          initMobileButtons();
+        }, 100);
+      }, { once: true });
+    }
+    
     console.log('Mobile controls initialization scheduled');
   }
   
@@ -3314,3 +3438,167 @@ function testMenuAndShare() {
 
 // Add test function to window for easy access
 window.testMenuAndShare = testMenuAndShare;
+
+// iOS-specific pause button test
+function testIOSPauseButton() {
+  console.log('=== iOS PAUSE BUTTON TEST ===');
+  const pauseBtn = document.getElementById('pauseBtn');
+  console.log('Pause button found:', !!pauseBtn);
+  
+  if (pauseBtn) {
+    console.log('Pause button visible:', pauseBtn.offsetWidth > 0 && pauseBtn.offsetHeight > 0);
+    console.log('Pause button style:', window.getComputedStyle(pauseBtn).display);
+    console.log('Pause button z-index:', window.getComputedStyle(pauseBtn).zIndex);
+    console.log('Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+    
+    // Check iOS detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    console.log('iOS detected:', isIOS, 'Safari detected:', isSafari);
+    
+    // Try to trigger pause button programmatically
+    console.log('Attempting to trigger pause button programmatically...');
+    
+    // Method 1: Direct click
+    pauseBtn.click();
+    
+    // Method 2: Touch events
+    setTimeout(() => {
+      console.log('Triggering touchstart...');
+      const touchStartEvent = new TouchEvent('touchstart', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        touches: [new Touch({
+          identifier: 1,
+          target: pauseBtn,
+          clientX: pauseBtn.offsetLeft + pauseBtn.offsetWidth / 2,
+          clientY: pauseBtn.offsetTop + pauseBtn.offsetHeight / 2,
+          pageX: pauseBtn.offsetLeft + pauseBtn.offsetWidth / 2,
+          pageY: pauseBtn.offsetTop + pauseBtn.offsetHeight / 2,
+          radiusX: 0,
+          radiusY: 0,
+          rotationAngle: 0,
+          force: 1
+        })]
+      });
+      pauseBtn.dispatchEvent(touchStartEvent);
+      
+      setTimeout(() => {
+        console.log('Triggering touchend...');
+        const touchEndEvent = new TouchEvent('touchend', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          changedTouches: [new Touch({
+            identifier: 1,
+            target: pauseBtn,
+            clientX: pauseBtn.offsetLeft + pauseBtn.offsetWidth / 2,
+            clientY: pauseBtn.offsetTop + pauseBtn.offsetHeight / 2,
+            pageX: pauseBtn.offsetLeft + pauseBtn.offsetWidth / 2,
+            pageY: pauseBtn.offsetTop + pauseBtn.offsetHeight / 2,
+            radiusX: 0,
+            radiusY: 0,
+            rotationAngle: 0,
+            force: 0
+          })]
+        });
+        pauseBtn.dispatchEvent(touchEndEvent);
+        
+        setTimeout(() => {
+          console.log('Game paused after programmatic trigger:', gamePaused);
+        }, 100);
+      }, 50);
+    }, 100);
+    
+    setTimeout(() => {
+      console.log('Game paused after all triggers:', gamePaused);
+    }, 300);
+  } else {
+    console.error('Pause button not found!');
+  }
+}
+
+// Add test function to window for easy access
+window.testIOSPauseButton = testIOSPauseButton;
+
+// Simple pause button test that doesn't require the full function
+window.testPauseSimple = function() {
+  console.log('=== SIMPLE PAUSE BUTTON TEST ===');
+  const pauseBtn = document.getElementById('pauseBtn');
+  console.log('Pause button found:', !!pauseBtn);
+  
+  if (pauseBtn) {
+    console.log('Pause button visible:', pauseBtn.offsetWidth > 0 && pauseBtn.offsetHeight > 0);
+    console.log('Game state - started:', typeof gameStarted !== 'undefined' ? gameStarted : 'undefined');
+    console.log('Game paused:', typeof gamePaused !== 'undefined' ? gamePaused : 'undefined');
+    
+    // Try to click the button
+    console.log('Attempting to click pause button...');
+    pauseBtn.click();
+    
+    setTimeout(() => {
+      console.log('Game paused after click:', typeof gamePaused !== 'undefined' ? gamePaused : 'undefined');
+    }, 100);
+  } else {
+    console.error('Pause button not found!');
+  }
+};
+
+// Check if game is loaded
+window.checkGameLoaded = function() {
+  console.log('=== GAME LOAD CHECK ===');
+  console.log('Canvas exists:', !!document.getElementById('gameCanvas'));
+  console.log('Pause button exists:', !!document.getElementById('pauseBtn'));
+  console.log('Game started variable exists:', typeof gameStarted !== 'undefined');
+  console.log('Game paused variable exists:', typeof gamePaused !== 'undefined');
+  console.log('Is mobile:', typeof isMobile !== 'undefined' ? isMobile : 'undefined');
+  console.log('User agent:', navigator.userAgent);
+};
+
+// Manual pause toggle function
+window.togglePause = function() {
+  console.log('=== MANUAL PAUSE TOGGLE ===');
+  console.log('Game started:', typeof gameStarted !== 'undefined' ? gameStarted : 'undefined');
+  console.log('Game paused before:', typeof gamePaused !== 'undefined' ? gamePaused : 'undefined');
+  
+  if (typeof gameStarted !== 'undefined' && typeof gamePaused !== 'undefined') {
+    if (gameStarted && !gameOver) {
+      gamePaused = !gamePaused;
+      console.log('Game paused after toggle:', gamePaused);
+      
+      // Update button appearance
+      const pauseBtn = document.getElementById('pauseBtn');
+      if (pauseBtn) {
+        if (gamePaused) {
+          pauseBtn.textContent = '▶️';
+          pauseBtn.style.background = 'rgba(76, 175, 80, 0.8)';
+          console.log('Button changed to resume (green)');
+        } else {
+          pauseBtn.textContent = '⏸';
+          pauseBtn.style.background = 'rgba(33, 150, 243, 0.8)';
+          console.log('Button changed to pause (blue)');
+        }
+      }
+      
+      // Handle music
+      if (typeof bgMusic !== 'undefined') {
+        if (gamePaused) {
+          bgMusic.pause();
+          console.log('Music paused');
+        } else {
+          bgMusic.play().catch(() => {});
+          console.log('Music resumed');
+        }
+      }
+      
+      return true;
+    } else {
+      console.log('Cannot pause - game not started or game over');
+      return false;
+    }
+  } else {
+    console.log('Game variables not available');
+    return false;
+  }
+};

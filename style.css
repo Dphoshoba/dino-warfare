@@ -165,13 +165,26 @@ html, body {
 .pause-btn {
   background: rgba(33, 150, 243, 0.8);
   border-color: rgba(33, 150, 243, 0.5);
-  /* Ensure button is always responsive */
+  /* iOS-specific optimizations */
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(33, 150, 243, 0.3);
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  /* iOS Safari specific fixes */
+  -webkit-appearance: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  /* Ensure button is always clickable */
+  position: relative;
+  z-index: 100;
+  /* Prevent iOS zoom on double tap */
+  touch-action: manipulation;
+  /* iOS Safari button styling */
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  border-radius: 50%;
 }
 
 .pause-btn:active {
@@ -573,5 +586,46 @@ html, body {
     z-index: 99999;
     text-align: center;
     padding: 40px;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .pause-btn {
+    /* iOS Safari specific button fixes */
+    -webkit-appearance: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(33, 150, 243, 0.3);
+    touch-action: manipulation;
+    /* Ensure button is always responsive on iOS */
+    position: relative;
+    z-index: 1000;
+    /* iOS Safari button styling */
+    border: 2px solid rgba(33, 150, 243, 0.5);
+    background: rgba(33, 150, 243, 0.8);
+    /* Prevent iOS zoom */
+    font-size: 24px;
+    /* iOS Safari specific border radius */
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+  }
+  
+  .pause-btn:active {
+    background: rgba(33, 150, 243, 1);
+    transform: scale(0.95);
+    -webkit-transform: scale(0.95);
+    transition: all 0.1s ease;
+    -webkit-transition: all 0.1s ease;
+  }
+  
+  /* Ensure all action buttons work on iOS */
+  .action-btn {
+    -webkit-appearance: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 1000;
   }
 }
