@@ -165,10 +165,25 @@ html, body {
 .pause-btn {
   background: rgba(33, 150, 243, 0.8);
   border-color: rgba(33, 150, 243, 0.5);
+  /* Ensure button is always responsive */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(33, 150, 243, 0.3);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .pause-btn:active {
   background: rgba(33, 150, 243, 1);
+  transform: scale(0.95);
+  transition: all 0.1s ease;
+}
+
+.pause-btn:hover {
+  background: rgba(33, 150, 243, 0.9);
+  transform: scale(1.05);
+  transition: all 0.1s ease;
 }
 
 .shop-btn {

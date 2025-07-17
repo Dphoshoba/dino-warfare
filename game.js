@@ -357,31 +357,45 @@ function initMobileButtons() {
     const pauseBtn = document.getElementById('pauseBtn');
     console.log('Pause button found:', !!pauseBtn);
     if (pauseBtn) {
-      pauseBtn.addEventListener('touchstart', (e) => {
+      // Add multiple event listeners for better reliability
+      const pauseButtonHandler = (e) => {
         e.preventDefault();
-        console.log('Pause button touched!');
+        e.stopPropagation();
+        console.log('Pause button activated! Event type:', e.type);
+        console.log('Game state before pause - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+        
         if (gameStarted && !gameOver) {
           gamePaused = !gamePaused;
           if (gamePaused) {
             bgMusic.pause();
+            console.log('Game paused successfully');
           } else {
             bgMusic.play().catch(() => {});
+            console.log('Game resumed successfully');
           }
+          console.log('Game state after pause - paused:', gamePaused);
+        } else {
+          console.log('Cannot pause - game not started or game over');
         }
+      };
+      
+      // Add multiple event types for better compatibility
+      pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false });
+      pauseBtn.addEventListener('click', pauseButtonHandler);
+      pauseBtn.addEventListener('mousedown', pauseButtonHandler);
+      
+      // Add visual feedback
+      pauseBtn.addEventListener('touchstart', () => {
+        pauseBtn.style.transform = 'scale(0.95)';
       });
-      // Add click fallback for iOS
-      pauseBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Pause button clicked (iOS fallback)!');
-        if (gameStarted && !gameOver) {
-          gamePaused = !gamePaused;
-          if (gamePaused) {
-            bgMusic.pause();
-          } else {
-            bgMusic.play().catch(() => {});
-          }
-        }
+      pauseBtn.addEventListener('touchend', () => {
+        pauseBtn.style.transform = 'scale(1)';
       });
+      pauseBtn.addEventListener('touchcancel', () => {
+        pauseBtn.style.transform = 'scale(1)';
+      });
+      
+      console.log('Pause button event listeners attached successfully');
     } else {
       console.error('Pause button not found!');
     }
@@ -3138,6 +3152,9 @@ function testPauseButton() {
   }
 }
 
+// Add test function to window for easy access
+window.testPauseButton = testPauseButton;
+
 // Simple test function for menu button
 function testMenuButton() {
   console.log('=== TESTING MENU BUTTON ===');
@@ -3173,7 +3190,6 @@ function testMenuButton() {
 }
 
 // Add test functions to window for easy access
-window.testPauseButton = testPauseButton;
 window.testMenuButton = testMenuButton;
 window.testMobileControls = testMobileControls;
 
