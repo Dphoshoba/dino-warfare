@@ -3091,3 +3091,64 @@ function testMobileControls() {
 
 // Add test function to window for easy access
 window.testMobileControls = testMobileControls;
+
+// Simple test function for pause button
+function testPauseButton() {
+  console.log('=== TESTING PAUSE BUTTON ===');
+  const pauseBtn = document.getElementById('pauseBtn');
+  console.log('Pause button found:', !!pauseBtn);
+  
+  if (pauseBtn) {
+    console.log('Pause button visible:', pauseBtn.offsetWidth > 0 && pauseBtn.offsetHeight > 0);
+    console.log('Pause button style:', window.getComputedStyle(pauseBtn).display);
+    console.log('Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+    
+    // Try to trigger pause button
+    console.log('Attempting to trigger pause button...');
+    pauseBtn.click();
+    
+    // Check if game paused
+    setTimeout(() => {
+      console.log('Game paused after click:', gamePaused);
+    }, 100);
+  }
+}
+
+// Simple test function for menu button
+function testMenuButton() {
+  console.log('=== TESTING MENU BUTTON ===');
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  
+  console.log('Menu button found:', !!menuBtn);
+  console.log('Mobile menu found:', !!mobileMenu);
+  
+  if (menuBtn) {
+    console.log('Menu button visible:', menuBtn.offsetWidth > 0 && menuBtn.offsetHeight > 0);
+    console.log('Menu button style:', window.getComputedStyle(menuBtn).display);
+  }
+  
+  if (mobileMenu) {
+    console.log('Mobile menu visible:', mobileMenu.offsetWidth > 0 && mobileMenu.offsetHeight > 0);
+    console.log('Mobile menu style:', window.getComputedStyle(mobileMenu).display);
+    console.log('Mobile menu has active class:', mobileMenu.classList.contains('active'));
+  }
+  
+  // Try to open menu
+  if (menuBtn) {
+    console.log('Attempting to open menu...');
+    menuBtn.click();
+    
+    setTimeout(() => {
+      if (mobileMenu) {
+        console.log('Mobile menu active after click:', mobileMenu.classList.contains('active'));
+        console.log('Mobile menu visible after click:', mobileMenu.offsetWidth > 0 && mobileMenu.offsetHeight > 0);
+      }
+    }, 100);
+  }
+}
+
+// Add test functions to window for easy access
+window.testPauseButton = testPauseButton;
+window.testMenuButton = testMenuButton;
+window.testMobileControls = testMobileControls;
