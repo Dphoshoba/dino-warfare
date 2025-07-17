@@ -337,170 +337,207 @@ function initMobileButtons() {
   
   console.log('Initializing mobile buttons...');
   
-  // Shoot button
-  const shootBtn = document.getElementById('shootBtn');
-  console.log('Shoot button found:', !!shootBtn);
-  if (shootBtn) {
-    shootBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      console.log('Shoot button touched!');
-      keys[' '] = true; // Trigger shooting
-    });
-    shootBtn.addEventListener('touchend', () => {
-      console.log('Shoot button released!');
-      keys[' '] = false;
-    });
-  }
-  
-  // Pause button
-  const pauseBtn = document.getElementById('pauseBtn');
-  if (pauseBtn) {
-    pauseBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (gameStarted && !gameOver) {
-        gamePaused = !gamePaused;
-        if (gamePaused) {
-          bgMusic.pause();
-        } else {
-          bgMusic.play().catch(() => {});
+  try {
+    // Shoot button
+    const shootBtn = document.getElementById('shootBtn');
+    console.log('Shoot button found:', !!shootBtn);
+    if (shootBtn) {
+      shootBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Shoot button touched!');
+        keys[' '] = true; // Trigger shooting
+      });
+      shootBtn.addEventListener('touchend', () => {
+        console.log('Shoot button released!');
+        keys[' '] = false;
+      });
+    }
+    
+    // Pause button
+    const pauseBtn = document.getElementById('pauseBtn');
+    console.log('Pause button found:', !!pauseBtn);
+    if (pauseBtn) {
+      pauseBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Pause button touched!');
+        if (gameStarted && !gameOver) {
+          gamePaused = !gamePaused;
+          if (gamePaused) {
+            bgMusic.pause();
+          } else {
+            bgMusic.play().catch(() => {});
+          }
         }
-      }
+      });
+      // Add click fallback for iOS
+      pauseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Pause button clicked (iOS fallback)!');
+        if (gameStarted && !gameOver) {
+          gamePaused = !gamePaused;
+          if (gamePaused) {
+            bgMusic.pause();
+          } else {
+            bgMusic.play().catch(() => {});
+          }
+        }
+      });
+    } else {
+      console.error('Pause button not found!');
+    }
+    
+    // Shop button
+    const shopBtn = document.getElementById('shopBtn');
+    console.log('Shop button found:', !!shopBtn);
+    if (shopBtn) {
+      shopBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Shop button touched!');
+        if (gameStarted && !gameOver) {
+          shopOpen = !shopOpen;
+          if (shopOpen) {
+            gamePaused = true;
+            bgMusic.pause();
+          } else {
+            gamePaused = false;
+            bgMusic.play().catch(() => {});
+          }
+        }
+      }, { passive: false });
+      // Add click event fallback for Android browsers
+      shopBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Shop button clicked (fallback)!');
+        if (gameStarted && !gameOver) {
+          shopOpen = !shopOpen;
+          if (shopOpen) {
+            gamePaused = true;
+            bgMusic.pause();
+          } else {
+            gamePaused = false;
+            bgMusic.play().catch(() => {});
+          }
+        }
+      });
+    }
+    
+    // Menu button
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    console.log('Menu button found:', !!menuBtn);
+    console.log('Mobile menu found:', !!mobileMenu);
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Menu button touched!');
+        mobileMenu.classList.add('active');
+      });
+      // Add click fallback for iOS
+      menuBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Menu button clicked (iOS fallback)!');
+        mobileMenu.classList.add('active');
+      });
+    }
+    
+    // Menu items
+    const mobileResumeBtn = document.getElementById('mobileResumeBtn');
+    const mobileShopBtn = document.getElementById('mobileShopBtn');
+    const mobileShareBtn = document.getElementById('mobileShareBtn');
+    const mobileDebugBtn = document.getElementById('mobileDebugBtn');
+    const mobileCloseMenuBtn = document.getElementById('mobileCloseMenuBtn');
+    
+    console.log('Mobile menu buttons found:', {
+      mobileResumeBtn: !!mobileResumeBtn,
+      mobileShopBtn: !!mobileShopBtn,
+      mobileShareBtn: !!mobileShareBtn,
+      mobileDebugBtn: !!mobileDebugBtn,
+      mobileCloseMenuBtn: !!mobileCloseMenuBtn
     });
-  }
-  
-  // Shop button
-  const shopBtn = document.getElementById('shopBtn');
-  if (shopBtn) {
-    shopBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      console.log('Shop button touched!');
-      if (gameStarted && !gameOver) {
-        shopOpen = !shopOpen;
-        if (shopOpen) {
-          gamePaused = true;
-          bgMusic.pause();
-        } else {
+    
+    if (mobileResumeBtn) {
+      mobileResumeBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Mobile resume button touched!');
+        if (!gameOver && gameStarted) {
           gamePaused = false;
+          shopOpen = false;
           bgMusic.play().catch(() => {});
         }
-      }
-    }, { passive: false });
-    // Add click event fallback for Android browsers
-    shopBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Shop button clicked (fallback)!');
-      if (gameStarted && !gameOver) {
-        shopOpen = !shopOpen;
-        if (shopOpen) {
-          gamePaused = true;
-          bgMusic.pause();
-        } else {
-          gamePaused = false;
-          bgMusic.play().catch(() => {});
-        }
-      }
-    });
-  }
-  
-  // Menu button
-  const menuBtn = document.getElementById('menuBtn');
-  const mobileMenu = document.getElementById('mobileMenu');
-  if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      mobileMenu.classList.add('active');
-    });
-  }
-  
-  // Menu items
-  const mobileResumeBtn = document.getElementById('mobileResumeBtn');
-  const mobileShopBtn = document.getElementById('mobileShopBtn');
-  const mobileShareBtn = document.getElementById('mobileShareBtn');
-  const mobileDebugBtn = document.getElementById('mobileDebugBtn');
-  const mobileCloseMenuBtn = document.getElementById('mobileCloseMenuBtn');
-  
-  console.log('Mobile menu buttons found:', {
-    mobileResumeBtn: !!mobileResumeBtn,
-    mobileShopBtn: !!mobileShopBtn,
-    mobileShareBtn: !!mobileShareBtn,
-    mobileDebugBtn: !!mobileDebugBtn,
-    mobileCloseMenuBtn: !!mobileCloseMenuBtn
-  });
-  
-  if (mobileResumeBtn) {
-    mobileResumeBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (!gameOver && gameStarted) {
-        gamePaused = false;
-        shopOpen = false;
-        bgMusic.play().catch(() => {});
-      }
-      mobileMenu.classList.remove('active');
-    });
-  }
-  
-  if (mobileShopBtn) {
-    mobileShopBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (gameStarted && !gameOver) {
-        shopOpen = !shopOpen;
-        if (shopOpen) {
-          gamePaused = true;
-          bgMusic.pause();
-        } else {
-          gamePaused = false;
-          bgMusic.play().catch(() => {});
-        }
-      }
-      mobileMenu.classList.remove('active');
-    });
-  }
-  
-  if (mobileShareBtn) {
-    console.log('Setting up mobile share button event listeners...');
-    mobileShareBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      console.log('Mobile share button touched!');
-      shareScore();
-      mobileMenu.classList.remove('active');
-    });
-    // Add click event fallback for iOS
-    mobileShareBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Mobile share button clicked (iOS fallback)!');
-      shareScore();
-      mobileMenu.classList.remove('active');
-    });
-    console.log('Mobile share button event listeners attached successfully');
-  } else {
-    console.error('Mobile share button not found!');
-  }
-  
-  if (mobileDebugBtn) {
-    mobileDebugBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (gameStarted) {
-        window.debugMode = !window.debugMode;
-        console.log('Debug mode:', window.debugMode);
-      }
-      mobileMenu.classList.remove('active');
-    });
-  }
-  
-  if (mobileCloseMenuBtn) {
-    mobileCloseMenuBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      mobileMenu.classList.remove('active');
-    });
-  }
-  
-  // Close menu when clicking outside
-  if (mobileMenu) {
-    mobileMenu.addEventListener('touchstart', (e) => {
-      if (e.target === mobileMenu) {
         mobileMenu.classList.remove('active');
-      }
-    });
+      });
+    }
+    
+    if (mobileShopBtn) {
+      mobileShopBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Mobile shop button touched!');
+        if (gameStarted && !gameOver) {
+          shopOpen = !shopOpen;
+          if (shopOpen) {
+            gamePaused = true;
+            bgMusic.pause();
+          } else {
+            gamePaused = false;
+            bgMusic.play().catch(() => {});
+          }
+        }
+        mobileMenu.classList.remove('active');
+      });
+    }
+    
+    if (mobileShareBtn) {
+      console.log('Setting up mobile share button event listeners...');
+      mobileShareBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Mobile share button touched!');
+        shareScore();
+        mobileMenu.classList.remove('active');
+      });
+      // Add click event fallback for iOS
+      mobileShareBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Mobile share button clicked (iOS fallback)!');
+        shareScore();
+        mobileMenu.classList.remove('active');
+      });
+      console.log('Mobile share button event listeners attached successfully');
+    } else {
+      console.error('Mobile share button not found!');
+    }
+    
+    if (mobileDebugBtn) {
+      mobileDebugBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Mobile debug button touched!');
+        if (gameStarted) {
+          window.debugMode = !window.debugMode;
+          console.log('Debug mode:', window.debugMode);
+        }
+        mobileMenu.classList.remove('active');
+      });
+    }
+    
+    if (mobileCloseMenuBtn) {
+      mobileCloseMenuBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Mobile close menu button touched!');
+        mobileMenu.classList.remove('active');
+      });
+    }
+    
+    // Close menu when clicking outside
+    if (mobileMenu) {
+      mobileMenu.addEventListener('touchstart', (e) => {
+        if (e.target === mobileMenu) {
+          mobileMenu.classList.remove('active');
+        }
+      });
+    }
+    
+    console.log('Mobile buttons initialization completed successfully');
+  } catch (error) {
+    console.error('Error initializing mobile buttons:', error);
   }
 }
 
@@ -3012,3 +3049,45 @@ function testMobileShareButton() {
 
 // Add test function to window for easy access
 window.testMobileShareButton = testMobileShareButton;
+
+// Test function to check mobile controls
+function testMobileControls() {
+  console.log('=== TESTING MOBILE CONTROLS ===');
+  console.log('Is mobile:', isMobile);
+  console.log('Game started:', gameStarted);
+  console.log('Game over:', gameOver);
+  console.log('Game paused:', gamePaused);
+  
+  // Check if buttons exist
+  const pauseBtn = document.getElementById('pauseBtn');
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  
+  console.log('Pause button exists:', !!pauseBtn);
+  console.log('Menu button exists:', !!menuBtn);
+  console.log('Mobile menu exists:', !!mobileMenu);
+  
+  if (pauseBtn) {
+    console.log('Pause button visible:', pauseBtn.offsetWidth > 0 && pauseBtn.offsetHeight > 0);
+    console.log('Pause button style:', window.getComputedStyle(pauseBtn).display);
+  }
+  
+  if (menuBtn) {
+    console.log('Menu button visible:', menuBtn.offsetWidth > 0 && menuBtn.offsetHeight > 0);
+    console.log('Menu button style:', window.getComputedStyle(menuBtn).display);
+  }
+  
+  // Try to trigger pause button
+  if (pauseBtn) {
+    console.log('Attempting to trigger pause button...');
+    pauseBtn.click();
+  }
+  
+  // Check if mobile menu is visible
+  if (mobileMenu) {
+    console.log('Mobile menu has active class:', mobileMenu.classList.contains('active'));
+  }
+}
+
+// Add test function to window for easy access
+window.testMobileControls = testMobileControls;
