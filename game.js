@@ -2277,6 +2277,8 @@ function shareScore() {
   console.log('Share button clicked!');
   console.log('Web Share API available:', !!navigator.share);
   console.log('User agent:', navigator.userAgent);
+  console.log('Protocol:', window.location.protocol);
+  console.log('URL:', window.location.href);
   
   // Create a more shareable message
   const shareText = `🦖 DINO WARFARE SCORE CHALLENGE! 🦖
@@ -2292,37 +2294,111 @@ Challenge accepted? 💪
 
   // Check if we're on iOS
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
   console.log('iOS detected:', isIOS);
+  console.log('Safari detected:', isSafari);
 
-  // Always try Web Share API first (works on mobile and some desktop browsers)
-  if (navigator.share) {
-    console.log('Attempting to use Web Share API...');
-    const gameData = {
-      title: "🦖 DinoWarfare Score Challenge",
-      text: shareText,
-      url: window.location.href
-    };
+  // iOS-specific sharing approach
+  if (isIOS) {
+    console.log('Using iOS-specific sharing approach...');
     
-    // On iOS, ensure we're in a secure context (HTTPS)
-    if (isIOS && window.location.protocol !== 'https:') {
-      console.log('iOS requires HTTPS for Web Share API, falling back to social options');
-      showSocialShareOptions();
-      return;
+    // Try Web Share API first (iOS 13+)
+    if (navigator.share && window.location.protocol === 'https:') {
+      console.log('Attempting iOS Web Share API...');
+      const gameData = {
+        title: "🦖 DinoWarfare Score Challenge",
+        text: shareText,
+        url: window.location.href
+      };
+      
+      navigator.share(gameData)
+        .then(() => {
+          console.log('iOS Web Share API succeeded!');
+          showShareSuccess('Score shared successfully!');
+        })
+        .catch((error) => {
+          console.log('iOS Web Share API failed:', error);
+          // Fall back to iOS-specific methods
+          tryIOSSharing(shareText);
+        });
+    } else {
+      console.log('Web Share API not available on iOS, trying alternative methods...');
+      tryIOSSharing(shareText);
     }
-    
-    navigator.share(gameData)
+  } else {
+    // Non-iOS devices
+    if (navigator.share) {
+      console.log('Attempting to use Web Share API...');
+      const gameData = {
+        title: "🦖 DinoWarfare Score Challenge",
+        text: shareText,
+        url: window.location.href
+      };
+      
+      navigator.share(gameData)
+        .then(() => {
+          console.log('Score shared successfully via Web Share API');
+          showShareSuccess('Score shared successfully!');
+        })
+        .catch((error) => {
+          console.log('Web Share API failed:', error);
+          showSocialShareOptions();
+        });
+    } else {
+      console.log('Web Share API not available, showing social share options...');
+      showSocialShareOptions();
+    }
+  }
+}
+
+// iOS-specific sharing methods
+function tryIOSSharing(shareText) {
+  console.log('Trying iOS-specific sharing methods...');
+  
+  // Method 1: Try to copy to clipboard first
+  if (navigator.clipboard) {
+    console.log('Trying clipboard API...');
+    navigator.clipboard.writeText(shareText)
       .then(() => {
-        console.log('Score shared successfully via Web Share API');
-        showShareSuccess('Score shared successfully!');
+        console.log('Text copied to clipboard successfully');
+        showShareSuccess('Score copied to clipboard! You can now paste it anywhere.');
       })
       .catch((error) => {
-        console.log('Web Share API failed:', error);
-        // Fallback to social share options
-        showSocialShareOptions();
+        console.log('Clipboard API failed:', error);
+        // Fall back to execCommand
+        fallbackCopyToClipboard(shareText);
       });
   } else {
-    console.log('Web Share API not available, showing social share options...');
-    // Fallback: show social share options
+    console.log('Clipboard API not available, using fallback...');
+    fallbackCopyToClipboard(shareText);
+  }
+}
+
+// Fallback copy method for older iOS versions
+function fallbackCopyToClipboard(text) {
+  console.log('Using fallback copy method...');
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    if (successful) {
+      console.log('Fallback copy successful');
+      showShareSuccess('Score copied to clipboard! You can now paste it anywhere.');
+    } else {
+      console.log('Fallback copy failed');
+      showSocialShareOptions();
+    }
+  } catch (error) {
+    console.log('Fallback copy error:', error);
     showSocialShareOptions();
   }
 }
@@ -2855,3 +2931,32 @@ if (isMobile) {
   // Add touchend fallback for Android browsers
   canvas.addEventListener('touchend', handleShopTouch, { passive: false });
 }
+
+// Test function for iOS sharing debugging
+function testIOSSharing() {
+  console.log('=== iOS SHARING DEBUG TEST ===');
+  console.log('User Agent:', navigator.userAgent);
+  console.log('Platform:', navigator.platform);
+  console.log('Vendor:', navigator.vendor);
+  console.log('Protocol:', window.location.protocol);
+  console.log('URL:', window.location.href);
+  console.log('Web Share API:', !!navigator.share);
+  console.log('Clipboard API:', !!navigator.clipboard);
+  console.log('ExecCommand copy:', !!document.execCommand);
+  
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+  
+  console.log('iOS detected:', isIOS);
+  console.log('Safari detected:', isSafari);
+  
+  if (isIOS) {
+    alert('iOS detected! Check console for debug info. Tap OK to test sharing.');
+    shareScore();
+  } else {
+    alert('Not iOS. Current platform: ' + navigator.platform);
+  }
+}
+
+// Add test function to window for easy access
+window.testIOSSharing = testIOSSharing;
