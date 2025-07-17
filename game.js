@@ -490,16 +490,40 @@ function initMobileButtons() {
       console.log('Setting up mobile share button event listeners...');
       mobileShareBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         console.log('Mobile share button touched!');
-        shareScore();
-        mobileMenu.classList.remove('active');
+        console.log('Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+        
+        // Immediately call share function
+        try {
+          shareScore();
+        } catch (error) {
+          console.error('Error calling shareScore:', error);
+        }
+        
+        // Close menu after a short delay to allow share dialog to appear
+        setTimeout(() => {
+          mobileMenu.classList.remove('active');
+        }, 100);
       });
       // Add click event fallback for iOS
       mobileShareBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         console.log('Mobile share button clicked (iOS fallback)!');
-        shareScore();
-        mobileMenu.classList.remove('active');
+        console.log('Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+        
+        // Immediately call share function
+        try {
+          shareScore();
+        } catch (error) {
+          console.error('Error calling shareScore:', error);
+        }
+        
+        // Close menu after a short delay to allow share dialog to appear
+        setTimeout(() => {
+          mobileMenu.classList.remove('active');
+        }, 100);
       });
       console.log('Mobile share button event listeners attached successfully');
     } else {
@@ -3152,3 +3176,21 @@ function testMenuButton() {
 window.testPauseButton = testPauseButton;
 window.testMenuButton = testMenuButton;
 window.testMobileControls = testMobileControls;
+
+// Simple test function for share button
+function testShareFunction() {
+  console.log('=== TESTING SHARE FUNCTION ===');
+  console.log('Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
+  console.log('Score:', score, 'Level:', level);
+  
+  try {
+    console.log('Calling shareScore function...');
+    shareScore();
+    console.log('shareScore function called successfully');
+  } catch (error) {
+    console.error('Error calling shareScore:', error);
+  }
+}
+
+// Add test function to window for easy access
+window.testShareFunction = testShareFunction;
