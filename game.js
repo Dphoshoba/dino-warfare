@@ -450,17 +450,40 @@ function initMobileButtons() {
     console.log('Menu button found:', !!menuBtn);
     console.log('Mobile menu found:', !!mobileMenu);
     if (menuBtn && mobileMenu) {
-      menuBtn.addEventListener('touchstart', (e) => {
+      // Add multiple event listeners for better reliability
+      const menuButtonHandler = (e) => {
         e.preventDefault();
-        console.log('Menu button touched!');
-        mobileMenu.classList.add('active');
+        e.stopPropagation();
+        console.log('Menu button activated! Event type:', e.type);
+        console.log('Mobile menu before toggle - active:', mobileMenu.classList.contains('active'));
+        
+        // Toggle menu
+        mobileMenu.classList.toggle('active');
+        
+        console.log('Mobile menu after toggle - active:', mobileMenu.classList.contains('active'));
+        console.log('Mobile menu style after toggle:', window.getComputedStyle(mobileMenu).display);
+        console.log('Mobile menu visible after toggle:', mobileMenu.offsetWidth > 0 && mobileMenu.offsetHeight > 0);
+      };
+      
+      // Add multiple event types for better compatibility
+      menuBtn.addEventListener('touchstart', menuButtonHandler, { passive: false });
+      menuBtn.addEventListener('click', menuButtonHandler);
+      menuBtn.addEventListener('mousedown', menuButtonHandler);
+      
+      // Add visual feedback
+      menuBtn.addEventListener('touchstart', () => {
+        menuBtn.style.transform = 'scale(0.95)';
       });
-      // Add click fallback for iOS
-      menuBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Menu button clicked (iOS fallback)!');
-        mobileMenu.classList.add('active');
+      menuBtn.addEventListener('touchend', () => {
+        menuBtn.style.transform = 'scale(1)';
       });
+      menuBtn.addEventListener('touchcancel', () => {
+        menuBtn.style.transform = 'scale(1)';
+      });
+      
+      console.log('Menu button event listeners attached successfully');
+    } else {
+      console.error('Menu button or mobile menu not found!');
     }
     
     // Menu items
@@ -3258,3 +3281,36 @@ function testShareButtonAccess() {
 
 // Add test function to window for easy access
 window.testShareButtonAccess = testShareButtonAccess;
+
+// Simple test to manually open menu and test share button
+function testMenuAndShare() {
+  console.log('=== TESTING MENU AND SHARE ===');
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileShareBtn = document.getElementById('mobileShareBtn');
+  
+  console.log('Menu button found:', !!menuBtn);
+  console.log('Mobile menu found:', !!mobileMenu);
+  console.log('Share button found:', !!mobileShareBtn);
+  
+  if (mobileMenu) {
+    console.log('Opening menu manually...');
+    mobileMenu.classList.add('active');
+    console.log('Menu active after manual open:', mobileMenu.classList.contains('active'));
+    console.log('Menu style after manual open:', window.getComputedStyle(mobileMenu).display);
+    console.log('Menu visible after manual open:', mobileMenu.offsetWidth > 0 && mobileMenu.offsetHeight > 0);
+    
+    // Wait a moment then test share button
+    setTimeout(() => {
+      if (mobileShareBtn) {
+        console.log('Share button visible after menu open:', mobileShareBtn.offsetWidth > 0 && mobileShareBtn.offsetHeight > 0);
+        console.log('Share button style:', window.getComputedStyle(mobileShareBtn).display);
+        console.log('Attempting to click share button...');
+        mobileShareBtn.click();
+      }
+    }, 500);
+  }
+}
+
+// Add test function to window for easy access
+window.testMenuAndShare = testMenuAndShare;
