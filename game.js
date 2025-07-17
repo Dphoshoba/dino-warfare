@@ -369,11 +369,20 @@ function initMobileButtons() {
           if (gamePaused) {
             bgMusic.pause();
             console.log('Game paused successfully');
+            // Visual feedback - change button text
+            pauseBtn.textContent = '▶️';
+            pauseBtn.style.background = 'rgba(76, 175, 80, 0.8)'; // Green for resume
           } else {
             bgMusic.play().catch(() => {});
             console.log('Game resumed successfully');
+            // Visual feedback - change button text back
+            pauseBtn.textContent = '⏸';
+            pauseBtn.style.background = 'rgba(33, 150, 243, 0.8)'; // Blue for pause
           }
           console.log('Game state after pause - paused:', gamePaused);
+          
+          // Show a brief message
+          showLevelMessage(gamePaused ? '⏸ Game Paused' : '▶️ Game Resumed');
         } else {
           console.log('Cannot pause - game not started or game over');
         }
@@ -3189,9 +3198,8 @@ function testMenuButton() {
   }
 }
 
-// Add test functions to window for easy access
+// Add test function to window for easy access
 window.testMenuButton = testMenuButton;
-window.testMobileControls = testMobileControls;
 
 // Simple test function for share button
 function testShareFunction() {
@@ -3210,3 +3218,43 @@ function testShareFunction() {
 
 // Add test function to window for easy access
 window.testShareFunction = testShareFunction;
+
+// Simple test to check share button accessibility
+function testShareButtonAccess() {
+  console.log('=== TESTING SHARE BUTTON ACCESS ===');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileShareBtn = document.getElementById('mobileShareBtn');
+  
+  console.log('Mobile menu found:', !!mobileMenu);
+  console.log('Mobile share button found:', !!mobileShareBtn);
+  
+  if (mobileMenu) {
+    console.log('Mobile menu has active class:', mobileMenu.classList.contains('active'));
+    console.log('Mobile menu visible:', mobileMenu.offsetWidth > 0 && mobileMenu.offsetHeight > 0);
+  }
+  
+  if (mobileShareBtn) {
+    console.log('Share button visible:', mobileShareBtn.offsetWidth > 0 && mobileShareBtn.offsetHeight > 0);
+    console.log('Share button style:', window.getComputedStyle(mobileShareBtn).display);
+    console.log('Share button text:', mobileShareBtn.textContent);
+  }
+  
+  // Try to open menu first
+  const menuBtn = document.getElementById('menuBtn');
+  if (menuBtn) {
+    console.log('Opening menu...');
+    menuBtn.click();
+    
+    setTimeout(() => {
+      console.log('Menu should now be open');
+      if (mobileShareBtn) {
+        console.log('Share button visible after menu open:', mobileShareBtn.offsetWidth > 0 && mobileShareBtn.offsetHeight > 0);
+        console.log('Attempting to click share button...');
+        mobileShareBtn.click();
+      }
+    }, 200);
+  }
+}
+
+// Add test function to window for easy access
+window.testShareButtonAccess = testShareButtonAccess;
