@@ -419,6 +419,14 @@ function initMobileButtons() {
   const mobileDebugBtn = document.getElementById('mobileDebugBtn');
   const mobileCloseMenuBtn = document.getElementById('mobileCloseMenuBtn');
   
+  console.log('Mobile menu buttons found:', {
+    mobileResumeBtn: !!mobileResumeBtn,
+    mobileShopBtn: !!mobileShopBtn,
+    mobileShareBtn: !!mobileShareBtn,
+    mobileDebugBtn: !!mobileDebugBtn,
+    mobileCloseMenuBtn: !!mobileCloseMenuBtn
+  });
+  
   if (mobileResumeBtn) {
     mobileResumeBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
@@ -449,6 +457,7 @@ function initMobileButtons() {
   }
   
   if (mobileShareBtn) {
+    console.log('Setting up mobile share button event listeners...');
     mobileShareBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
       console.log('Mobile share button touched!');
@@ -462,6 +471,9 @@ function initMobileButtons() {
       shareScore();
       mobileMenu.classList.remove('active');
     });
+    console.log('Mobile share button event listeners attached successfully');
+  } else {
+    console.error('Mobile share button not found!');
   }
   
   if (mobileDebugBtn) {
@@ -2628,6 +2640,13 @@ window.addEventListener('load', () => {
       initMobileButtons();
     }, 1000);
     
+    // Additional attempts for iOS
+    setTimeout(() => {
+      console.log('iOS-specific mobile control initialization...');
+      initPlayerTouchControl();
+      initMobileButtons();
+    }, 2000);
+    
     console.log('Mobile controls initialization scheduled');
   }
   
@@ -2960,3 +2979,36 @@ function testIOSSharing() {
 
 // Add test function to window for easy access
 window.testIOSSharing = testIOSSharing;
+
+// Test function to verify mobile share button
+function testMobileShareButton() {
+  console.log('=== TESTING MOBILE SHARE BUTTON ===');
+  const mobileShareBtn = document.getElementById('mobileShareBtn');
+  console.log('Mobile share button found:', !!mobileShareBtn);
+  
+  if (mobileShareBtn) {
+    console.log('Button text content:', mobileShareBtn.textContent);
+    console.log('Button HTML:', mobileShareBtn.outerHTML);
+    console.log('Button visible:', mobileShareBtn.offsetWidth > 0 && mobileShareBtn.offsetHeight > 0);
+    console.log('Button style display:', window.getComputedStyle(mobileShareBtn).display);
+    console.log('Button style visibility:', window.getComputedStyle(mobileShareBtn).visibility);
+    
+    // Try to trigger a click programmatically
+    console.log('Attempting to trigger click programmatically...');
+    mobileShareBtn.click();
+    
+    // Also try to trigger touchstart
+    console.log('Attempting to trigger touchstart programmatically...');
+    const touchEvent = new TouchEvent('touchstart', {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    });
+    mobileShareBtn.dispatchEvent(touchEvent);
+  } else {
+    console.error('Mobile share button not found in DOM!');
+  }
+}
+
+// Add test function to window for easy access
+window.testMobileShareButton = testMobileShareButton;
