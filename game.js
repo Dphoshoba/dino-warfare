@@ -661,6 +661,24 @@ function initMobileButtons() {
       });
     }
     
+    // Help button
+    const mobileHelpBtn = document.getElementById('mobileHelpBtn');
+    if (mobileHelpBtn) {
+      mobileHelpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        console.log('Mobile help button touched!');
+        showHelpModal();
+        mobileMenu.classList.remove('active');
+      });
+      // Add click event fallback
+      mobileHelpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Mobile help button clicked!');
+        showHelpModal();
+        mobileMenu.classList.remove('active');
+      });
+    }
+    
     if (mobileCloseMenuBtn) {
       mobileCloseMenuBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -2726,6 +2744,165 @@ Challenge accepted? 💪
       shareDialog.remove();
     }
   });
+}
+
+// Show help modal with user manual
+function showHelpModal() {
+  console.log('Showing help modal...');
+  
+  // Create help modal dialog
+  const helpModal = document.createElement('div');
+  helpModal.setAttribute('role', 'dialog');
+  helpModal.setAttribute('aria-modal', 'true');
+  helpModal.setAttribute('aria-label', 'DinoWarfare User Manual');
+  helpModal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+  `;
+  
+  const helpContent = document.createElement('div');
+  helpContent.style.cssText = `
+    background: #1a1a1a;
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    border: 2px solid #4CAF50;
+    position: relative;
+  `;
+  
+  helpContent.innerHTML = `
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #4CAF50; margin: 0 0 10px 0; font-size: 28px;">🦖 DinoWarfare User Manual</h1>
+      <p style="color: #888; margin: 0;">Fruit of the Spirit Edition</p>
+    </div>
+    
+    <div style="text-align: left; line-height: 1.6;">
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">📱 Mobile Controls (iOS/Android)</h2>
+      <div style="background: rgba(76, 175, 80, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <p><strong>🎯 Movement:</strong> Touch anywhere on screen to move your player</p>
+        <p><strong>🎯 Shoot:</strong> Red button (bottom left) - Manual shooting</p>
+        <p><strong>⏸ Pause:</strong> Blue button (bottom right) - Pause/Resume game</p>
+        <p><strong>🛒 Shop:</strong> Orange button (bottom right) - Buy upgrades</p>
+        <p><strong>☰ Menu:</strong> Top right corner - Access this help and more</p>
+      </div>
+      
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">💻 Desktop Controls</h2>
+      <div style="background: rgba(76, 175, 80, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <p><strong>Arrow Keys (← →):</strong> Move player left/right</p>
+        <p><strong>Spacebar:</strong> Shoot bullets</p>
+        <p><strong>P Key:</strong> Pause/Resume game</p>
+        <p><strong>S Key:</strong> Open/Close shop</p>
+        <p><strong>D Key:</strong> Toggle debug mode</p>
+      </div>
+      
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">🎮 Gameplay Tips</h2>
+      <div style="background: rgba(255, 152, 0, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <p><strong>🏆 Objective:</strong> Survive waves of dinosaur enemies</p>
+        <p><strong>💰 Coins:</strong> Earn by defeating enemies, spend in shop</p>
+        <p><strong>⚡ Power-ups:</strong> Green = health, Blue = shield</p>
+        <p><strong>👾 Bosses:</strong> Appear every 5 waves - use power-ups!</p>
+        <p><strong>🛒 Shop Strategy:</strong> Buy "Extra Diagonal Bullets" for 4-way fire</p>
+      </div>
+      
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">📱 Installation Guide</h2>
+      <div style="background: rgba(33, 150, 243, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <h3 style="color: #2196F3; margin-top: 0;">iOS (iPhone/iPad):</h3>
+        <p>1. Open Safari and visit the game URL<br>
+        2. Tap Share button (□↗)<br>
+        3. Tap "Add to Home Screen"<br>
+        4. Tap "Add" - Game appears like a native app!</p>
+        
+        <h3 style="color: #2196F3;">Android:</h3>
+        <p>1. Open Chrome and visit the game URL<br>
+        2. Look for "Add to Home Screen" banner<br>
+        3. Or tap Menu (⋮) → "Add to Home Screen"<br>
+        4. Choose name and tap "Add"</p>
+        
+        <h3 style="color: #2196F3;">Desktop:</h3>
+        <p>1. Open any modern browser<br>
+        2. Visit the game URL and bookmark it<br>
+        3. Chrome: Menu → "Create Shortcut" for app-like experience</p>
+      </div>
+      
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">🛒 Shop Items</h2>
+      <div style="background: rgba(255, 193, 7, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <p><strong>Extra Life (50 coins):</strong> +1 life</p>
+        <p><strong>Faster Bullets (30 coins):</strong> +2 bullet speed</p>
+        <p><strong>More Bullets (40 coins):</strong> +1 bullet per shot</p>
+        <p><strong>Bigger Bullets (25 coins):</strong> +1 bullet size</p>
+        <p><strong>Faster Movement (35 coins):</strong> +1 movement speed</p>
+        <p><strong>🌟 Extra Diagonal Bullets (60 coins):</strong> 4-way diagonal shooting</p>
+      </div>
+      
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">🍎 Level Themes</h2>
+      <div style="background: rgba(156, 39, 176, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <p>Based on the <strong>Fruit of the Spirit</strong>:</p>
+        <p>1. Love • 2. Joy • 3. Peace • 4. Patience • 5. Kindness<br>
+        6. Goodness • 7. Faithfulness • 8. Gentleness • 9. Self-Control<br>
+        10. Faith • 11. Hope</p>
+        <p><em>Free trial: Levels 1-3 | Subscription: Unlimited access</em></p>
+      </div>
+      
+      <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">❗ Troubleshooting</h2>
+      <div style="background: rgba(244, 67, 54, 0.1); padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <p><strong>Pause button not working (iOS):</strong> Refresh page, clear Safari cache</p>
+        <p><strong>Controls not responding:</strong> Enable JavaScript, update browser</p>
+        <p><strong>Audio not playing:</strong> Check volume, tap screen first</p>
+        <p><strong>Game won't load:</strong> Check internet, try different browser</p>
+        <p><strong>Performance issues:</strong> Close other tabs, update browser</p>
+      </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #333;">
+      <button onclick="this.parentElement.parentElement.parentElement.remove()"
+              style="background: #4CAF50; color: white; border: none; padding: 15px 30px;
+                     border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold;
+                     transition: all 0.2s ease;">
+        ✅ Close Help
+      </button>
+      <p style="color: #888; margin: 15px 0 0 0; font-size: 14px;">
+        Created by David Oshoba George • DinoWarfare v1.0
+      </p>
+    </div>
+  `;
+  
+  helpModal.appendChild(helpContent);
+  document.body.appendChild(helpModal);
+  
+  // Close modal when clicking outside
+  helpModal.addEventListener('click', (e) => {
+    if (e.target === helpModal) {
+      helpModal.remove();
+    }
+  });
+  
+  // Close with escape key
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      helpModal.remove();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+  
+  console.log('Help modal created and displayed');
 }
 
 function gameLoop() {
