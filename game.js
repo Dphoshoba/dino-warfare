@@ -353,7 +353,7 @@ function initMobileButtons() {
       });
     }
     
-    // Pause button - iOS-optimized implementation
+    // Pause button - Simplified iOS-optimized implementation
     const pauseBtn = document.getElementById('pauseBtn');
     console.log('Pause button found:', !!pauseBtn);
     if (pauseBtn) {
@@ -390,79 +390,64 @@ function initMobileButtons() {
         }
       };
       
-      // iOS-specific event handling
+      // Simplified iOS-specific event handling
       if (isIOS) {
         console.log('Setting up iOS-specific pause button handlers...');
         
-        // iOS Safari requires specific touch handling
-        let touchStartTime = 0;
-        let touchMoved = false;
+        // For iOS, we'll use a much simpler approach
+        let isPressed = false;
         
-        // Touch start - record time and prevent default
+        // Primary touch handler for iOS
         pauseBtn.addEventListener('touchstart', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          touchStartTime = Date.now();
-          touchMoved = false;
+          isPressed = true;
           console.log('iOS touchstart on pause button');
           
           // Visual feedback
           pauseBtn.style.transform = 'scale(0.95)';
           pauseBtn.style.opacity = '0.8';
+          
+          // Trigger pause immediately on touchstart for better responsiveness
+          setTimeout(() => {
+            if (isPressed) {
+              console.log('iOS pause button triggered via touchstart!');
+              togglePause();
+            }
+          }, 50); // Small delay to prevent double triggers
         }, { passive: false });
         
-        // Touch move - mark as moved to prevent accidental triggers
-        pauseBtn.addEventListener('touchmove', (e) => {
-          e.preventDefault();
-          touchMoved = true;
-          console.log('iOS touchmove on pause button');
-        }, { passive: false });
-        
-        // Touch end - trigger pause if not moved and short duration
+        // Touch end - reset visual state
         pauseBtn.addEventListener('touchend', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('iOS touchend on pause button, moved:', touchMoved, 'duration:', Date.now() - touchStartTime);
+          isPressed = false;
+          console.log('iOS touchend on pause button');
           
           // Reset visual feedback
           pauseBtn.style.transform = 'scale(1)';
           pauseBtn.style.opacity = '1';
-          
-          // Only trigger if touch was short and didn't move
-          if (!touchMoved && (Date.now() - touchStartTime) < 500) {
-            console.log('iOS pause button triggered!');
-            togglePause();
-          }
         }, { passive: false });
         
         // Touch cancel - reset state
         pauseBtn.addEventListener('touchcancel', (e) => {
           e.preventDefault();
+          e.stopPropagation();
+          isPressed = false;
           console.log('iOS touchcancel on pause button');
           pauseBtn.style.transform = 'scale(1)';
           pauseBtn.style.opacity = '1';
-          touchMoved = false;
         }, { passive: false });
         
-        // Also add click event as fallback for iOS
+        // Click event as additional fallback for iOS
         pauseBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           console.log('iOS click fallback on pause button');
-          togglePause();
+          if (!isPressed) { // Only trigger if not already handled by touch
+            togglePause();
+          }
         });
-        
-        // Add pointer events for iOS 13+
-        pauseBtn.addEventListener('pointerdown', (e) => {
-          e.preventDefault();
-          console.log('iOS pointerdown on pause button');
-        }, { passive: false });
-        
-        pauseBtn.addEventListener('pointerup', (e) => {
-          e.preventDefault();
-          console.log('iOS pointerup on pause button');
-          togglePause();
-        }, { passive: false });
         
       } else {
         // Non-iOS devices - standard event handling
@@ -491,14 +476,6 @@ function initMobileButtons() {
           pauseBtn.style.transform = 'scale(1)';
         });
       }
-      
-      // Add global click handler as ultimate fallback
-      document.addEventListener('click', (e) => {
-        if (e.target === pauseBtn) {
-          console.log('Global click handler caught pause button click');
-          togglePause();
-        }
-      });
       
       console.log('Pause button event listeners attached successfully');
     } else {
