@@ -336,6 +336,8 @@ function initMobileButtons() {
   }
   
   console.log('Initializing mobile buttons...');
+  console.log('User agent:', navigator.userAgent);
+  console.log('Is Android:', /Android/.test(navigator.userAgent));
   
   try {
     // Shoot button
@@ -353,15 +355,26 @@ function initMobileButtons() {
       });
     }
     
-    // Pause button - Simplified iOS-optimized implementation
+    // Pause button - Universal implementation for all mobile platforms
     const pauseBtn = document.getElementById('pauseBtn');
     console.log('Pause button found:', !!pauseBtn);
     if (pauseBtn) {
-      // iOS-specific detection
+      console.log('Pause button properties:', {
+        id: pauseBtn.id,
+        className: pauseBtn.className,
+        textContent: pauseBtn.textContent,
+        style: pauseBtn.style.cssText,
+        offsetWidth: pauseBtn.offsetWidth,
+        offsetHeight: pauseBtn.offsetHeight,
+        visible: pauseBtn.offsetWidth > 0 && pauseBtn.offsetHeight > 0
+      });
+      
+      // Platform detection
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
-      console.log('iOS detected:', isIOS, 'Safari detected:', isSafari, 'Android detected:', isAndroid);
+      const isChrome = /Chrome/.test(navigator.userAgent);
+      console.log('Platform detection:', { isIOS, isSafari, isAndroid, isChrome });
       
       // Core pause function
       const togglePause = () => {
@@ -388,23 +401,66 @@ function initMobileButtons() {
       
       // --- UNIVERSAL EVENT HANDLERS FOR PAUSE BUTTON (iOS, Android, others) ---
       const pauseButtonHandler = (e) => {
-        console.log('[PAUSE] Event:', e.type, '| Android:', isAndroid, '| iOS:', isIOS);
-        e.preventDefault && e.preventDefault();
-        e.stopPropagation && e.stopPropagation();
+        console.log('[PAUSE] Event:', e.type, '| Android:', isAndroid, '| iOS:', isIOS, '| Chrome:', isChrome);
+        console.log('[PAUSE] Event details:', { 
+          type: e.type, 
+          target: e.target.id, 
+          currentTarget: e.currentTarget.id,
+          touches: e.touches ? e.touches.length : 0,
+          changedTouches: e.changedTouches ? e.changedTouches.length : 0
+        });
+        
+        // Prevent default behavior
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        
+        // Call the toggle function
         togglePause();
+        
         // Visual feedback
         pauseBtn.style.transform = 'scale(0.95)';
         setTimeout(() => { pauseBtn.style.transform = 'scale(1)'; }, 120);
+        
+        // Return false to prevent any default behavior
+        return false;
       };
+      
+      // Android-specific: Remove any existing listeners first
+      pauseBtn.removeEventListener('touchstart', pauseButtonHandler);
+      pauseBtn.removeEventListener('click', pauseButtonHandler);
+      pauseBtn.removeEventListener('pointerdown', pauseButtonHandler);
+      pauseBtn.removeEventListener('mousedown', pauseButtonHandler);
+      
       // Attach all relevant events for Android and others
-      pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false });
-      pauseBtn.addEventListener('click', pauseButtonHandler);
-      pauseBtn.addEventListener('pointerdown', pauseButtonHandler);
-      pauseBtn.addEventListener('mousedown', pauseButtonHandler);
+      console.log('Attaching pause button event listeners...');
+      pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false, capture: false });
+      pauseBtn.addEventListener('click', pauseButtonHandler, { passive: false, capture: false });
+      pauseBtn.addEventListener('pointerdown', pauseButtonHandler, { passive: false, capture: false });
+      pauseBtn.addEventListener('mousedown', pauseButtonHandler, { passive: false, capture: false });
+      
+      // Additional Android-specific events
+      if (isAndroid) {
+        console.log('Adding Android-specific pause button events...');
+        pauseBtn.addEventListener('touchend', pauseButtonHandler, { passive: false, capture: false });
+        pauseBtn.addEventListener('touchcancel', pauseButtonHandler, { passive: false, capture: false });
+      }
+      
       // Visual feedback for touchend/cancel
       pauseBtn.addEventListener('touchend', () => { pauseBtn.style.transform = 'scale(1)'; });
       pauseBtn.addEventListener('touchcancel', () => { pauseBtn.style.transform = 'scale(1)'; });
+      
       console.log('Pause button event listeners attached for all platforms');
+      
+      // Test the button is clickable
+      setTimeout(() => {
+        console.log('Testing pause button clickability...');
+        const rect = pauseBtn.getBoundingClientRect();
+        console.log('Pause button rect:', rect);
+        console.log('Pause button is visible:', rect.width > 0 && rect.height > 0);
+        console.log('Pause button z-index:', window.getComputedStyle(pauseBtn).zIndex);
+        console.log('Pause button pointer-events:', window.getComputedStyle(pauseBtn).pointerEvents);
+      }, 100);
     } else {
       console.error('Pause button not found!');
     }
@@ -413,12 +469,35 @@ function initMobileButtons() {
     const shopBtn = document.getElementById('shopBtn');
     console.log('Shop button found:', !!shopBtn);
     if (shopBtn) {
+      console.log('Shop button properties:', {
+        id: shopBtn.id,
+        className: shopBtn.className,
+        textContent: shopBtn.textContent,
+        style: shopBtn.style.cssText,
+        offsetWidth: shopBtn.offsetWidth,
+        offsetHeight: shopBtn.offsetHeight,
+        visible: shopBtn.offsetWidth > 0 && shopBtn.offsetHeight > 0
+      });
+      
       const isAndroid = /Android/.test(navigator.userAgent);
+      const isChrome = /Chrome/.test(navigator.userAgent);
+      
       // Core shop function
       const toggleShop = (e) => {
-        console.log('[SHOP] Event:', e.type, '| Android:', isAndroid);
-        e.preventDefault && e.preventDefault();
-        e.stopPropagation && e.stopPropagation();
+        console.log('[SHOP] Event:', e.type, '| Android:', isAndroid, '| Chrome:', isChrome);
+        console.log('[SHOP] Event details:', { 
+          type: e.type, 
+          target: e.target.id, 
+          currentTarget: e.currentTarget.id,
+          touches: e.touches ? e.touches.length : 0,
+          changedTouches: e.changedTouches ? e.changedTouches.length : 0
+        });
+        
+        // Prevent default behavior
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        
         if (gameStarted && !gameOver) {
           shopOpen = !shopOpen;
           if (shopOpen) {
@@ -429,12 +508,42 @@ function initMobileButtons() {
             bgMusic.play().catch(() => {});
           }
         }
+        
+        // Return false to prevent any default behavior
+        return false;
       };
+      
+      // Android-specific: Remove any existing listeners first
+      shopBtn.removeEventListener('touchstart', toggleShop);
+      shopBtn.removeEventListener('click', toggleShop);
+      shopBtn.removeEventListener('pointerdown', toggleShop);
+      shopBtn.removeEventListener('mousedown', toggleShop);
+      
       // Attach all relevant events for Android and others
-      shopBtn.addEventListener('touchstart', toggleShop, { passive: false });
-      shopBtn.addEventListener('click', toggleShop);
-      shopBtn.addEventListener('pointerdown', toggleShop);
-      shopBtn.addEventListener('mousedown', toggleShop);
+      console.log('Attaching shop button event listeners...');
+      shopBtn.addEventListener('touchstart', toggleShop, { passive: false, capture: false });
+      shopBtn.addEventListener('click', toggleShop, { passive: false, capture: false });
+      shopBtn.addEventListener('pointerdown', toggleShop, { passive: false, capture: false });
+      shopBtn.addEventListener('mousedown', toggleShop, { passive: false, capture: false });
+      
+      // Additional Android-specific events
+      if (isAndroid) {
+        console.log('Adding Android-specific shop button events...');
+        shopBtn.addEventListener('touchend', toggleShop, { passive: false, capture: false });
+        shopBtn.addEventListener('touchcancel', toggleShop, { passive: false, capture: false });
+      }
+      
+      console.log('Shop button event listeners attached for all platforms');
+      
+      // Test the button is clickable
+      setTimeout(() => {
+        console.log('Testing shop button clickability...');
+        const rect = shopBtn.getBoundingClientRect();
+        console.log('Shop button rect:', rect);
+        console.log('Shop button is visible:', rect.width > 0 && rect.height > 0);
+        console.log('Shop button z-index:', window.getComputedStyle(shopBtn).zIndex);
+        console.log('Shop button pointer-events:', window.getComputedStyle(shopBtn).pointerEvents);
+      }, 100);
     } else {
       console.error('Shop button not found!');
     }
@@ -3677,4 +3786,81 @@ window.togglePause = function() {
     console.log('Game variables not available');
     return false;
   }
+};
+
+// Android-specific test function
+window.testAndroidButtons = function() {
+  console.log('=== Testing Android Buttons ===');
+  console.log('User agent:', navigator.userAgent);
+  console.log('Is Android:', /Android/.test(navigator.userAgent));
+  console.log('Is Chrome:', /Chrome/.test(navigator.userAgent));
+  
+  const pauseBtn = document.getElementById('pauseBtn');
+  const shopBtn = document.getElementById('shopBtn');
+  
+  if (pauseBtn) {
+    console.log('Pause button found:', pauseBtn);
+    console.log('Pause button rect:', pauseBtn.getBoundingClientRect());
+    console.log('Pause button style:', window.getComputedStyle(pauseBtn));
+    
+    // Test pause button click
+    console.log('Testing pause button click...');
+    const pauseClickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    pauseBtn.dispatchEvent(pauseClickEvent);
+    
+    // Test pause button touch
+    console.log('Testing pause button touch...');
+    const pauseTouchEvent = new TouchEvent('touchstart', { 
+      bubbles: true, 
+      cancelable: true,
+      touches: [new Touch({ identifier: 1, target: pauseBtn, clientX: 100, clientY: 100 })]
+    });
+    pauseBtn.dispatchEvent(pauseTouchEvent);
+  } else {
+    console.error('Pause button not found!');
+  }
+  
+  if (shopBtn) {
+    console.log('Shop button found:', shopBtn);
+    console.log('Shop button rect:', shopBtn.getBoundingClientRect());
+    console.log('Shop button style:', window.getComputedStyle(shopBtn));
+    
+    // Test shop button click
+    console.log('Testing shop button click...');
+    const shopClickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    shopBtn.dispatchEvent(shopClickEvent);
+    
+    // Test shop button touch
+    console.log('Testing shop button touch...');
+    const shopTouchEvent = new TouchEvent('touchstart', { 
+      bubbles: true, 
+      cancelable: true,
+      touches: [new Touch({ identifier: 2, target: shopBtn, clientX: 200, clientY: 100 })]
+    });
+    shopBtn.dispatchEvent(shopTouchEvent);
+  } else {
+    console.error('Shop button not found!');
+  }
+  
+  console.log('=== End Android Buttons Test ===');
+};
+
+// Force re-initialize mobile buttons
+window.forceInitMobileButtons = function() {
+  console.log('=== Force Re-initializing Mobile Buttons ===');
+  console.log('Current mobile state:', typeof isMobile !== 'undefined' ? isMobile : 'undefined');
+  console.log('User agent:', navigator.userAgent);
+  
+  // Force mobile detection
+  window.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  console.log('Forced mobile state:', window.isMobile);
+  
+  // Call initialization
+  if (typeof initMobileButtons === 'function') {
+    initMobileButtons();
+  } else {
+    console.error('initMobileButtons function not found!');
+  }
+  
+  console.log('=== End Force Re-initialization ===');
 };
