@@ -360,124 +360,51 @@ function initMobileButtons() {
       // iOS-specific detection
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-      console.log('iOS detected:', isIOS, 'Safari detected:', isSafari);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      console.log('iOS detected:', isIOS, 'Safari detected:', isSafari, 'Android detected:', isAndroid);
       
       // Core pause function
       const togglePause = () => {
         console.log('Toggle pause called! Game state - started:', gameStarted, 'paused:', gamePaused, 'over:', gameOver);
-        
         if (gameStarted && !gameOver) {
           gamePaused = !gamePaused;
           if (gamePaused) {
             bgMusic.pause();
             console.log('Game paused successfully');
-            // Visual feedback - change button text
             pauseBtn.textContent = '▶️';
-            pauseBtn.style.background = 'rgba(76, 175, 80, 0.8)'; // Green for resume
+            pauseBtn.style.background = 'rgba(76, 175, 80, 0.8)';
           } else {
             bgMusic.play().catch(() => {});
             console.log('Game resumed successfully');
-            // Visual feedback - change button text back
             pauseBtn.textContent = '⏸';
-            pauseBtn.style.background = 'rgba(33, 150, 243, 0.8)'; // Blue for pause
+            pauseBtn.style.background = 'rgba(33, 150, 243, 0.8)';
           }
           console.log('Game state after pause - paused:', gamePaused);
-          
-          // Show a brief message
           showLevelMessage(gamePaused ? '⏸ Game Paused' : '▶️ Game Resumed');
         } else {
           console.log('Cannot pause - game not started or game over');
         }
       };
       
-      // Simplified iOS-specific event handling
-      if (isIOS) {
-        console.log('Setting up iOS-specific pause button handlers...');
-        
-        // For iOS, we'll use a much simpler approach
-        let isPressed = false;
-        
-        // Primary touch handler for iOS
-        pauseBtn.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          isPressed = true;
-          console.log('iOS touchstart on pause button');
-          
-          // Visual feedback
-          pauseBtn.style.transform = 'scale(0.95)';
-          pauseBtn.style.opacity = '0.8';
-          
-          // Trigger pause immediately on touchstart for better responsiveness
-          setTimeout(() => {
-            if (isPressed) {
-              console.log('iOS pause button triggered via touchstart!');
-              togglePause();
-            }
-          }, 50); // Small delay to prevent double triggers
-        }, { passive: false });
-        
-        // Touch end - reset visual state
-        pauseBtn.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          isPressed = false;
-          console.log('iOS touchend on pause button');
-          
-          // Reset visual feedback
-          pauseBtn.style.transform = 'scale(1)';
-          pauseBtn.style.opacity = '1';
-        }, { passive: false });
-        
-        // Touch cancel - reset state
-        pauseBtn.addEventListener('touchcancel', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          isPressed = false;
-          console.log('iOS touchcancel on pause button');
-          pauseBtn.style.transform = 'scale(1)';
-          pauseBtn.style.opacity = '1';
-        }, { passive: false });
-        
-        // Click event as additional fallback for iOS
-        pauseBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('iOS click fallback on pause button');
-          if (!isPressed) { // Only trigger if not already handled by touch
-            togglePause();
-          }
-        });
-        
-      } else {
-        // Non-iOS devices - standard event handling
-        console.log('Setting up standard pause button handlers...');
-        
-        const pauseButtonHandler = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('Pause button activated! Event type:', e.type);
-          togglePause();
-        };
-        
-        // Add multiple event types for better compatibility
-        pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false });
-        pauseBtn.addEventListener('click', pauseButtonHandler);
-        pauseBtn.addEventListener('mousedown', pauseButtonHandler);
-        
-        // Add visual feedback
-        pauseBtn.addEventListener('touchstart', () => {
-          pauseBtn.style.transform = 'scale(0.95)';
-        });
-        pauseBtn.addEventListener('touchend', () => {
-          pauseBtn.style.transform = 'scale(1)';
-        });
-        pauseBtn.addEventListener('touchcancel', () => {
-          pauseBtn.style.transform = 'scale(1)';
-        });
-      }
-      
-      console.log('Pause button event listeners attached successfully');
+      // --- UNIVERSAL EVENT HANDLERS FOR PAUSE BUTTON (iOS, Android, others) ---
+      const pauseButtonHandler = (e) => {
+        console.log('[PAUSE] Event:', e.type, '| Android:', isAndroid, '| iOS:', isIOS);
+        e.preventDefault && e.preventDefault();
+        e.stopPropagation && e.stopPropagation();
+        togglePause();
+        // Visual feedback
+        pauseBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => { pauseBtn.style.transform = 'scale(1)'; }, 120);
+      };
+      // Attach all relevant events for Android and others
+      pauseBtn.addEventListener('touchstart', pauseButtonHandler, { passive: false });
+      pauseBtn.addEventListener('click', pauseButtonHandler);
+      pauseBtn.addEventListener('pointerdown', pauseButtonHandler);
+      pauseBtn.addEventListener('mousedown', pauseButtonHandler);
+      // Visual feedback for touchend/cancel
+      pauseBtn.addEventListener('touchend', () => { pauseBtn.style.transform = 'scale(1)'; });
+      pauseBtn.addEventListener('touchcancel', () => { pauseBtn.style.transform = 'scale(1)'; });
+      console.log('Pause button event listeners attached for all platforms');
     } else {
       console.error('Pause button not found!');
     }
@@ -486,9 +413,12 @@ function initMobileButtons() {
     const shopBtn = document.getElementById('shopBtn');
     console.log('Shop button found:', !!shopBtn);
     if (shopBtn) {
-      shopBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        console.log('Shop button touched!');
+      const isAndroid = /Android/.test(navigator.userAgent);
+      // Core shop function
+      const toggleShop = (e) => {
+        console.log('[SHOP] Event:', e.type, '| Android:', isAndroid);
+        e.preventDefault && e.preventDefault();
+        e.stopPropagation && e.stopPropagation();
         if (gameStarted && !gameOver) {
           shopOpen = !shopOpen;
           if (shopOpen) {
@@ -499,22 +429,14 @@ function initMobileButtons() {
             bgMusic.play().catch(() => {});
           }
         }
-      }, { passive: false });
-      // Add click event fallback for Android browsers
-      shopBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Shop button clicked (fallback)!');
-        if (gameStarted && !gameOver) {
-          shopOpen = !shopOpen;
-          if (shopOpen) {
-            gamePaused = true;
-            bgMusic.pause();
-          } else {
-            gamePaused = false;
-            bgMusic.play().catch(() => {});
-          }
-        }
-      });
+      };
+      // Attach all relevant events for Android and others
+      shopBtn.addEventListener('touchstart', toggleShop, { passive: false });
+      shopBtn.addEventListener('click', toggleShop);
+      shopBtn.addEventListener('pointerdown', toggleShop);
+      shopBtn.addEventListener('mousedown', toggleShop);
+    } else {
+      console.error('Shop button not found!');
     }
     
     // Menu button
